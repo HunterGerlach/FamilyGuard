@@ -1,7 +1,9 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace FamilyGuard.Infrastructure.Platform.Windows;
 
+[SupportedOSPlatform("windows")]
 public sealed class XInputControllerDetector
 {
     private const int ERROR_SUCCESS = 0;

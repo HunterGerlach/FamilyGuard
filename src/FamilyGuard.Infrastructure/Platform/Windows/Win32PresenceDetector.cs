@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Input;
 
 namespace FamilyGuard.Infrastructure.Platform.Windows;
 
+[SupportedOSPlatform("windows")]
 public sealed class Win32PresenceDetector : IPresenceDetector
 {
     [StructLayout(LayoutKind.Sequential)]

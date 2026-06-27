@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ namespace FamilyGuard.Infrastructure.Platform.Windows;
 /// Controls the Windows default communications microphone via Core Audio APIs.
 /// Uses IMMDeviceEnumerator and IAudioEndpointVolume COM interfaces.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class CoreAudioMicrophoneController : IMicrophoneController, IDisposable
 {
     private readonly ILogger<CoreAudioMicrophoneController> _logger;

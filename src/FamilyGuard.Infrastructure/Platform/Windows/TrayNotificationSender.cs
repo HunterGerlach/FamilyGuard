@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Output;
 using Microsoft.Extensions.Logging;
 
@@ -8,6 +9,7 @@ namespace FamilyGuard.Infrastructure.Platform.Windows;
 /// to display via H.NotifyIcon balloon. Falls back to logging if no
 /// subscriber is attached.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class TrayNotificationSender : INotificationSender
 {
     private readonly ILogger<TrayNotificationSender> _logger;

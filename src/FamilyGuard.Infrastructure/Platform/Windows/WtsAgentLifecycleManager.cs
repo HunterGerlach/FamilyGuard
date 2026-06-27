@@ -1,5 +1,6 @@
-using System.Diagnostics;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Input;
 using FamilyGuard.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ namespace FamilyGuard.Infrastructure.Platform.Windows;
 /// This implementation uses a simpler Process.Start approach suitable for
 /// same-session testing and development.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class WtsAgentLifecycleManager : IAgentLifecycleManager
 {
     private readonly string _agentExePath;

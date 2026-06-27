@@ -12,17 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify Podman available
-        run: podman --version
-
       - name: Build and test in UBI9 container
         run: podman build -f build/Containerfile -t familyguard-build .
-
-      - name: Verify test count
-        run: |
-          podman run --rm familyguard-build dotnet test \
-            tests/FamilyGuard.Domain.Tests/ \
-            tests/FamilyGuard.Application.Tests/ \
-            tests/FamilyGuard.Infrastructure.Tests/ \
-            --no-build --logger "console;verbosity=normal" 2>&1 | \
-            tee /dev/stderr | grep -q "Test Run Successful"

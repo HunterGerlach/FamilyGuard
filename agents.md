@@ -41,3 +41,19 @@ This file records unexpected issues that required non-obvious solutions during d
 **Resolution:** Added `NuGetAuditSuppress` in `Directory.Build.props` globally. Pinning a newer version of SQLitePCLRaw didn't help — the vulnerable version is the latest.
 
 **Lesson:** `NuGetAuditSuppress` is the correct mechanism for suppressing specific known vulnerabilities. Put it in `Directory.Build.props` so it applies to all projects including test projects that transitively reference the vulnerable package.
+
+## 6. WiX Toolset v7 OSMF EULA (2026-06-30)
+
+**Issue:** WiX Toolset v7 requires accepting the Open Source Maintenance Fee (OSMF) EULA before it can be used. CI build failed with `error WIX7015: You must accept the Open Source Maintenance Fee (OSMF) EULA`.
+
+**Resolution:** Added `wix eula accept` step in release workflow after `dotnet tool install --global wix`.
+
+**Lesson:** WiX v7 introduced a mandatory EULA acceptance step. Must run `wix eula accept` in CI before any `wix build` command. This is a one-time per-environment step.
+
+## 7. WiX Package.wxs Must Match Published Output (2026-06-30)
+
+**Issue:** WiX file referenced `appsettings.json` which doesn't exist in framework-dependent publish output. Each `File` element must reference an actual file that exists.
+
+**Resolution:** Rewrote Package.wxs to list only files that actually appear in `dotnet publish` output (.exe, .dll, .deps.json, .runtimeconfig.json). Split components into Exe + Deps for cleaner service registration.
+
+**Lesson:** Always verify `dotnet publish` output before writing WiX file references. Framework-dependent deploys don't include `appsettings.json` unless the project explicitly copies it.

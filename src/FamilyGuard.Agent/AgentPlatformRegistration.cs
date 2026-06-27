@@ -18,5 +18,6 @@ public static class AgentPlatformRegistration
         services.AddSingleton<IPresenceDetector, CompositePresenceDetector>();
         services.AddSingleton<IMicrophoneController, CoreAudioMicrophoneController>();
         services.AddSingleton<INotificationSender, TrayNotificationSender>();
+        services.AddSingleton<ISystemEventMonitor, SystemEventMonitor>();
     }
 }

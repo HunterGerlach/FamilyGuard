@@ -103,6 +103,23 @@ public sealed class CoreAudioMicrophoneController : IMicrophoneController, IDisp
         }, defaultValue: false);
     }
 
+    public void Unmute()
+    {
+        WithEndpointVolume((volume) =>
+        {
+            var hr = volume.SetMute(false, Guid.Empty);
+            if (hr != 0)
+            {
+                _logger.LogError("Failed to unmute microphone (HRESULT: 0x{Hr:X8})", hr);
+            }
+            else
+            {
+                _logger.LogInformation("Microphone unmuted via Core Audio endpoint");
+            }
+            return hr == 0;
+        }, defaultValue: false);
+    }
+
     private T WithEndpointVolume<T>(Func<IAudioEndpointVolume, T> action, T defaultValue)
     {
         IMMDeviceEnumerator? enumerator = null;

@@ -46,3 +46,9 @@ Thumbs.db
 ## FamilyGuard data (dev)
 *.db
 *.db-journal
+
+## Certificates (NEVER commit)
+.certs/
+*.pfx
+*.key
+*.pem

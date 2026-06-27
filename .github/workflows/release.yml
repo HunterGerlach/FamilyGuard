@@ -38,6 +38,51 @@ jobs:
       - name: Publish UI
         run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 -o publish/ui --self-contained false
 
+      # --- Code Signing ---
+      - name: Decode signing certificate
+        shell: pwsh
+        env:
+          CODE_SIGNING_CERT: ${{ secrets.CODE_SIGNING_CERT }}
+        run: |
+          $certBytes = [Convert]::FromBase64String($env:CODE_SIGNING_CERT)
+          [IO.File]::WriteAllBytes("${{ runner.temp }}\codesign.pfx", $certBytes)
+          Write-Host "Certificate decoded to ${{ runner.temp }}\codesign.pfx"
+
+      - name: Sign executables
+        shell: pwsh
+        env:
+          CODE_SIGNING_PASSWORD: ${{ secrets.CODE_SIGNING_PASSWORD }}
+        run: |
+          $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" |
+            Where-Object { $_.FullName -like "*x64*" } |
+            Select-Object -First 1 -ExpandProperty FullName
+
+          if (-not $signtool) {
+            Write-Warning "signtool.exe not found — skipping signing"
+            exit 0
+          }
+
+          Write-Host "Using signtool: $signtool"
+
+          $filesToSign = @(
+            "publish/service/FamilyGuard.Service.exe",
+            "publish/agent/FamilyGuard.Agent.exe",
+            "publish/ui/FamilyGuard.UI.exe"
+          )
+
+          foreach ($file in $filesToSign) {
+            if (Test-Path $file) {
+              Write-Host "Signing $file..."
+              & $signtool sign /f "${{ runner.temp }}\codesign.pfx" /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $file
+              if ($LASTEXITCODE -ne 0) {
+                Write-Warning "Failed to sign $file (exit code $LASTEXITCODE)"
+              } else {
+                Write-Host "Signed $file successfully"
+              }
+            }
+          }
+
+      # --- Installer ---
       - name: Install WiX Toolset
         run: dotnet tool install --global wix
 
@@ -50,6 +95,30 @@ jobs:
             -o publish/FamilyGuard.msi
         continue-on-error: true
 
+      - name: Sign MSI
+        if: hashFiles('publish/FamilyGuard.msi') != ''
+        shell: pwsh
+        env:
+          CODE_SIGNING_PASSWORD: ${{ secrets.CODE_SIGNING_PASSWORD }}
+        run: |
+          $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" |
+            Where-Object { $_.FullName -like "*x64*" } |
+            Select-Object -First 1 -ExpandProperty FullName
+
+          if ($signtool -and (Test-Path "publish/FamilyGuard.msi")) {
+            Write-Host "Signing MSI..."
+            & $signtool sign /f "${{ runner.temp }}\codesign.pfx" /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "publish/FamilyGuard.msi"
+          }
+
+      # --- Cleanup cert ---
+      - name: Remove signing certificate
+        if: always()
+        shell: pwsh
+        run: |
+          $certPath = "${{ runner.temp }}\codesign.pfx"
+          if (Test-Path $certPath) { Remove-Item $certPath -Force }
+
+      # --- Release ---
       - name: Generate update manifest
         shell: pwsh
         run: |

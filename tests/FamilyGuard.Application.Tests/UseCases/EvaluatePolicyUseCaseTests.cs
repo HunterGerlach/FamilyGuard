@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using NSubstitute;
 using Xunit;
 using FamilyGuard.Application.Policies;
@@ -40,7 +40,7 @@ public class EvaluatePolicyUseCaseTests
 
         var results = _useCase.Execute(rules, PresenceState.Away, "child1");
 
-        results.Should().ContainSingle();
+        results.Count.ShouldBe(1);
     }
 
     [Fact]

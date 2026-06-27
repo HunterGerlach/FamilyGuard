@@ -1,0 +1,16 @@
+name: Build and Test (Linux/Podman)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test in UBI9 container
+        run: podman build -f build/Containerfile -t familyguard-build .

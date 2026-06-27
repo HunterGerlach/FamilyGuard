@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Infrastructure.Platform.Abstractions;
 
@@ -15,7 +15,7 @@ public class SmokeTest
             ControllerActive = true
         };
 
-        stub.GetIdleTime().Should().Be(TimeSpan.FromSeconds(42));
-        stub.IsControllerActive().Should().BeTrue();
+        stub.GetIdleTime().ShouldBe(TimeSpan.FromSeconds(42));
+        stub.IsControllerActive().ShouldBeTrue();
     }
 }

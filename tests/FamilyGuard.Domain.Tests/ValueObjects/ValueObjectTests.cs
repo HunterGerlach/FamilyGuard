@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Domain.ValueObjects;
 
@@ -12,8 +12,8 @@ public class ValueObjectTests
         var a = new SessionId(3);
         var b = new SessionId(3);
 
-        a.Should().Be(b);
-        (a == b).Should().BeTrue();
+        a.ShouldBe(b);
+        (a == b).ShouldBeTrue();
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class ValueObjectTests
         var a = new SessionId(3);
         var b = new SessionId(4);
 
-        a.Should().NotBe(b);
+        a.ShouldNotBe(b);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class ValueObjectTests
         var a = new DeviceId("mic-001");
         var b = new DeviceId("mic-001");
 
-        a.Should().Be(b);
+        a.ShouldBe(b);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class ValueObjectTests
         var a = new UserId("S-1-5-21-123");
         var b = new UserId("S-1-5-21-123");
 
-        a.Should().Be(b);
+        a.ShouldBe(b);
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public class ValueObjectTests
             Name: "HyperX QuadCast",
             IsCommunicationsDefault: true);
 
-        mic.DeviceId.Value.Should().Be("mic-001");
-        mic.Name.Should().Be("HyperX QuadCast");
-        mic.IsCommunicationsDefault.Should().BeTrue();
+        mic.DeviceId.Value.ShouldBe("mic-001");
+        mic.Name.ShouldBe("HyperX QuadCast");
+        mic.IsCommunicationsDefault.ShouldBeTrue();
     }
 }

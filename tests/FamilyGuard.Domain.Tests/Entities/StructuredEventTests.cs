@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Domain.Entities;
 using FamilyGuard.Domain.Enums;
@@ -19,11 +19,11 @@ public class StructuredEventTests
             policyId: "mute_unattended_microphone",
             timestamp: timestamp);
 
-        evt.EventType.Should().Be(EventType.MicAutoMuted);
-        evt.WindowsUser.Should().Be("child1");
-        evt.SessionId.Value.Should().Be(3);
-        evt.PolicyId.Should().Be("mute_unattended_microphone");
-        evt.TimestampUtc.Should().Be(timestamp);
+        evt.EventType.ShouldBe(EventType.MicAutoMuted);
+        evt.WindowsUser.ShouldBe("child1");
+        evt.SessionId.Value.ShouldBe(3);
+        evt.PolicyId.ShouldBe("mute_unattended_microphone");
+        evt.TimestampUtc.ShouldBe(timestamp);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class StructuredEventTests
             windowsUser: "child1",
             sessionId: new SessionId(1));
 
-        evt.Id.Should().NotBe(Guid.Empty);
+        evt.Id.ShouldNotBe(Guid.Empty);
     }
 
     [Fact]
@@ -52,10 +52,8 @@ public class StructuredEventTests
             sessionId: new SessionId(3),
             details: details);
 
-        evt.Details.Should().ContainKey("device_name")
-            .WhoseValue.Should().Be("HyperX QuadCast");
-        evt.Details.Should().ContainKey("inactive_seconds")
-            .WhoseValue.Should().Be("94");
+        evt.Details["device_name"].ShouldBe("HyperX QuadCast");
+        evt.Details["inactive_seconds"].ShouldBe("94");
     }
 
     [Fact]
@@ -66,7 +64,7 @@ public class StructuredEventTests
             windowsUser: "child1",
             sessionId: new SessionId(1));
 
-        evt.Details.Should().BeEmpty();
+        evt.Details.ShouldBeEmpty();
     }
 
     [Fact]
@@ -78,6 +76,6 @@ public class StructuredEventTests
             sessionId: new SessionId(1));
 
         // Details dictionary should be read-only
-        evt.Details.Should().BeAssignableTo<IReadOnlyDictionary<string, string>>();
+        evt.Details.ShouldBeAssignableTo<IReadOnlyDictionary<string, string>>();
     }
 }

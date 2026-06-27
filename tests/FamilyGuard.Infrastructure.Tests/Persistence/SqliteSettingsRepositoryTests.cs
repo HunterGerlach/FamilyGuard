@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Infrastructure.Persistence;
@@ -24,8 +24,8 @@ public class SqliteSettingsRepositoryTests : IDisposable
     {
         var settings = _repo.Load();
 
-        settings.PresenceTimeoutSeconds.Should().Be(90);
-        settings.CoveredUsers.Should().BeEmpty();
+        settings.PresenceTimeoutSeconds.ShouldBe(90);
+        settings.CoveredUsers.ShouldBeEmpty();
     }
 
     [Fact]
@@ -40,8 +40,8 @@ public class SqliteSettingsRepositoryTests : IDisposable
         _repo.Save(settings);
         var loaded = _repo.Load();
 
-        loaded.PresenceTimeoutSeconds.Should().Be(120);
-        loaded.CoveredUsers.Should().BeEquivalentTo(["child1", "child2"]);
+        loaded.PresenceTimeoutSeconds.ShouldBe(120);
+        loaded.CoveredUsers.ShouldBe(["child1", "child2"], ignoreOrder: true);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class SqliteSettingsRepositoryTests : IDisposable
         _repo.Save(settings2);
 
         var loaded = _repo.Load();
-        loaded.PresenceTimeoutSeconds.Should().Be(120);
+        loaded.PresenceTimeoutSeconds.ShouldBe(120);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class SqliteSettingsRepositoryTests : IDisposable
     {
         _repo.SetPin("1234");
 
-        _repo.VerifyPin("1234").Should().BeTrue();
+        _repo.VerifyPin("1234").ShouldBeTrue();
     }
 
     [Fact]
@@ -70,12 +70,12 @@ public class SqliteSettingsRepositoryTests : IDisposable
     {
         _repo.SetPin("1234");
 
-        _repo.VerifyPin("5678").Should().BeFalse();
+        _repo.VerifyPin("5678").ShouldBeFalse();
     }
 
     [Fact]
     public void VerifyPin_WithNoPin_ReturnsFalse()
     {
-        _repo.VerifyPin("1234").Should().BeFalse();
+        _repo.VerifyPin("1234").ShouldBeFalse();
     }
 }

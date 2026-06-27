@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Domain.Entities;
 using FamilyGuard.Domain.Enums;
@@ -12,7 +12,7 @@ public class PresenceContextTests
     {
         var context = new PresenceContext();
 
-        context.State.Should().Be(PresenceState.Unknown);
+        context.State.ShouldBe(PresenceState.Unknown);
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class PresenceContextTests
     {
         var context = new PresenceContext();
 
-        context.InactiveSeconds.Should().Be(0);
+        context.InactiveSeconds.ShouldBe(0);
     }
 
     [Fact]
@@ -31,8 +31,8 @@ public class PresenceContextTests
 
         context.UpdateState(PresenceState.Present, now);
 
-        context.State.Should().Be(PresenceState.Present);
-        context.LastStateChangeAt.Should().Be(now);
+        context.State.ShouldBe(PresenceState.Present);
+        context.LastStateChangeAt.ShouldBe(now);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class PresenceContextTests
 
         context.RecordActivity(activityTime);
 
-        context.LastActivityAt.Should().Be(activityTime);
+        context.LastActivityAt.ShouldBe(activityTime);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class PresenceContextTests
 
         context.RecordActivity(activityTime);
 
-        context.GetInactiveSeconds(now).Should().BeApproximately(30, 1);
+        ((double)context.GetInactiveSeconds(now)).ShouldBe(30, tolerance: 1);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class PresenceContextTests
         context.UpdateState(PresenceState.Present, first);
         context.UpdateState(PresenceState.Present, second);
 
-        context.LastStateChangeAt.Should().Be(first);
+        context.LastStateChangeAt.ShouldBe(first);
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public class PresenceContextTests
         context.UpdateState(PresenceState.Present, first);
         context.UpdateState(PresenceState.Away, second);
 
-        context.LastStateChangeAt.Should().Be(second);
-        context.State.Should().Be(PresenceState.Away);
+        context.LastStateChangeAt.ShouldBe(second);
+        context.State.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class PresenceContextTests
 
         context.SessionLocked = true;
 
-        context.SessionLocked.Should().BeTrue();
+        context.SessionLocked.ShouldBeTrue();
     }
 
     [Fact]
@@ -102,6 +102,6 @@ public class PresenceContextTests
 
         context.MicUnmuted = true;
 
-        context.MicUnmuted.Should().BeTrue();
+        context.MicUnmuted.ShouldBeTrue();
     }
 }

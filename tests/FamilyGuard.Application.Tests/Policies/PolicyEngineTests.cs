@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Application.Policies;
 using FamilyGuard.Domain.Entities;
@@ -28,10 +28,10 @@ public class PolicyEngineTests
 
         var results = engine.Evaluate([rule], state);
 
-        results.Should().ContainSingle();
-        results[0].Rule.Id.Should().Be("mute_unattended_microphone");
-        results[0].Actions.Should().ContainSingle()
-            .Which.ActionType.Should().Be(PolicyActionType.MuteMicrophone);
+        results.Count.ShouldBe(1);
+        results[0].Rule.Id.ShouldBe("mute_unattended_microphone");
+        var action = results[0].Actions.ShouldHaveSingleItem();
+        action.ActionType.ShouldBe(PolicyActionType.MuteMicrophone);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class PolicyEngineTests
 
         var results = engine.Evaluate([rule], state);
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class PolicyEngineTests
 
         var results = engine.Evaluate([rule], state);
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class PolicyEngineTests
 
         var results = engine.Evaluate([rule], state);
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -128,8 +128,8 @@ public class PolicyEngineTests
 
         var results = engine.Evaluate(rules, state);
 
-        results.Should().ContainSingle();
-        results[0].Rule.Id.Should().Be("rule1");
+        results.Count.ShouldBe(1);
+        results[0].Rule.Id.ShouldBe("rule1");
     }
 
     [Fact]
@@ -145,6 +145,6 @@ public class PolicyEngineTests
 
         var results = engine.Evaluate([], state);
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 }

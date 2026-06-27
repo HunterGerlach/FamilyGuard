@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Application.StateMachine;
 using FamilyGuard.Domain.Enums;
@@ -24,7 +24,7 @@ public class PresenceStateMachineTests
     {
         var machine = CreateMachine();
 
-        machine.CurrentState.Should().Be(PresenceState.Unknown);
+        machine.CurrentState.ShouldBe(PresenceState.Unknown);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class PresenceStateMachineTests
 
         machine.RecordActivity();
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -44,9 +44,9 @@ public class PresenceStateMachineTests
 
         machine.RecordActivity();
 
-        _publishedEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<PresenceChangedEvent>()
-            .Which.NewState.Should().Be(PresenceState.Present);
+        var item = _publishedEvents.ShouldHaveSingleItem();
+        var typed = item.ShouldBeOfType<PresenceChangedEvent>();
+        typed.NewState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class PresenceStateMachineTests
         _clock.Advance(TimeSpan.FromSeconds(75));
         machine.Evaluate();
 
-        machine.CurrentState.Should().Be(PresenceState.LikelyAway);
+        machine.CurrentState.ShouldBe(PresenceState.LikelyAway);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class PresenceStateMachineTests
         _clock.Advance(TimeSpan.FromSeconds(90));
         machine.Evaluate();
 
-        machine.CurrentState.Should().Be(PresenceState.Away);
+        machine.CurrentState.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -83,15 +83,15 @@ public class PresenceStateMachineTests
 
         _clock.Advance(TimeSpan.FromSeconds(76));
         machine.Evaluate();
-        machine.CurrentState.Should().Be(PresenceState.LikelyAway);
+        machine.CurrentState.ShouldBe(PresenceState.LikelyAway);
 
         _publishedEvents.Clear();
         machine.RecordActivity();
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
-        _publishedEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<PresenceChangedEvent>()
-            .Which.PreviousState.Should().Be(PresenceState.LikelyAway);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
+        var item = _publishedEvents.ShouldHaveSingleItem();
+        var typed = item.ShouldBeOfType<PresenceChangedEvent>();
+        typed.PreviousState.ShouldBe(PresenceState.LikelyAway);
     }
 
     [Fact]
@@ -102,12 +102,12 @@ public class PresenceStateMachineTests
 
         _clock.Advance(TimeSpan.FromSeconds(91));
         machine.Evaluate();
-        machine.CurrentState.Should().Be(PresenceState.Away);
+        machine.CurrentState.ShouldBe(PresenceState.Away);
 
         _publishedEvents.Clear();
         machine.RecordActivity();
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class PresenceStateMachineTests
 
         machine.SetSessionLocked(true);
 
-        machine.CurrentState.Should().Be(PresenceState.Away);
+        machine.CurrentState.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class PresenceStateMachineTests
         machine.SetSessionLocked(false);
         machine.RecordActivity();
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class PresenceStateMachineTests
 
         machine.SetSessionDisconnected(true);
 
-        machine.CurrentState.Should().Be(PresenceState.Away);
+        machine.CurrentState.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -156,11 +156,11 @@ public class PresenceStateMachineTests
 
         _clock.Advance(TimeSpan.FromSeconds(75));
         machine.Evaluate();
-        machine.CurrentState.Should().Be(PresenceState.LikelyAway);
+        machine.CurrentState.ShouldBe(PresenceState.LikelyAway);
 
         _clock.Advance(TimeSpan.FromSeconds(25));
         machine.Evaluate();
-        machine.CurrentState.Should().Be(PresenceState.Away);
+        machine.CurrentState.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class PresenceStateMachineTests
         _clock.Advance(TimeSpan.FromSeconds(10));
         machine.RecordActivity();
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -185,7 +185,7 @@ public class PresenceStateMachineTests
 
         machine.Evaluate();
 
-        machine.CurrentState.Should().Be(PresenceState.Unknown);
+        machine.CurrentState.ShouldBe(PresenceState.Unknown);
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public class PresenceStateMachineTests
 
         _clock.Advance(TimeSpan.FromSeconds(42));
 
-        machine.InactiveSeconds.Should().BeApproximately(42, 1);
+        ((double)machine.InactiveSeconds).ShouldBe(42, tolerance: 1);
     }
 
     [Fact]
@@ -208,8 +208,8 @@ public class PresenceStateMachineTests
         _clock.Advance(TimeSpan.FromSeconds(80));
         machine.RecordControllerActivity();
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
-        machine.InactiveSeconds.Should().BeApproximately(0, 1);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
+        ((double)machine.InactiveSeconds).ShouldBe(0, tolerance: 1);
     }
 
     [Fact]
@@ -226,7 +226,7 @@ public class PresenceStateMachineTests
             machine.Evaluate();
         }
 
-        machine.CurrentState.Should().Be(PresenceState.Present);
+        machine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -240,8 +240,8 @@ public class PresenceStateMachineTests
         machine.Evaluate();
 
         var evt = _publishedEvents.OfType<PresenceChangedEvent>().Last();
-        evt.PreviousState.Should().Be(PresenceState.Present);
-        evt.NewState.Should().Be(PresenceState.Away);
+        evt.PreviousState.ShouldBe(PresenceState.Present);
+        evt.NewState.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -254,6 +254,6 @@ public class PresenceStateMachineTests
         _clock.Advance(TimeSpan.FromSeconds(10));
         machine.Evaluate();
 
-        _publishedEvents.Should().BeEmpty();
+        _publishedEvents.ShouldBeEmpty();
     }
 }

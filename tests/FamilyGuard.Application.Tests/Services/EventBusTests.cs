@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Application.Services;
 using FamilyGuard.Domain.Enums;
@@ -19,7 +19,7 @@ public class EventBusTests
             PresenceState.Unknown, PresenceState.Present, DateTimeOffset.UtcNow);
         bus.Publish(domainEvent);
 
-        received.Should().Be(domainEvent);
+        received.ShouldBe(domainEvent);
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class EventBusTests
             PresenceState.Unknown, PresenceState.Present, DateTimeOffset.UtcNow);
         bus.Publish(domainEvent);
 
-        calls.Should().HaveCount(2);
+        calls.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -44,9 +44,7 @@ public class EventBusTests
         var domainEvent = new PresenceChangedEvent(
             PresenceState.Unknown, PresenceState.Present, DateTimeOffset.UtcNow);
 
-        var act = () => bus.Publish(domainEvent);
-
-        act.Should().NotThrow();
+        Should.NotThrow(() => bus.Publish(domainEvent));
     }
 
     [Fact]
@@ -63,7 +61,7 @@ public class EventBusTests
             PresenceState.Unknown, PresenceState.Present, DateTimeOffset.UtcNow);
         bus.Publish(domainEvent);
 
-        presenceCalls.Should().HaveCount(1);
-        micCalls.Should().BeEmpty();
+        presenceCalls.Count.ShouldBe(1);
+        micCalls.ShouldBeEmpty();
     }
 }

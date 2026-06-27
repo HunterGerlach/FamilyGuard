@@ -1,11 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FamilyGuard.Infrastructure\FamilyGuard.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\FamilyGuard.Application\FamilyGuard.Application.csproj" />
+  </ItemGroup>
+
+  <!-- Integration tests reference Windows platform code; exclude on non-Windows -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <Compile Remove="**/*.cs" />
   </ItemGroup>
 
   <ItemGroup>

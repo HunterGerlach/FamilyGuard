@@ -9,31 +9,44 @@ COPY FamilyGuard.sln Directory.Build.props global.json ./
 COPY src/FamilyGuard.Domain/FamilyGuard.Domain.csproj src/FamilyGuard.Domain/
 COPY src/FamilyGuard.Application/FamilyGuard.Application.csproj src/FamilyGuard.Application/
 COPY src/FamilyGuard.Infrastructure/FamilyGuard.Infrastructure.csproj src/FamilyGuard.Infrastructure/
+COPY src/FamilyGuard.Service/FamilyGuard.Service.csproj src/FamilyGuard.Service/
+COPY src/FamilyGuard.Agent/FamilyGuard.Agent.csproj src/FamilyGuard.Agent/
 COPY tests/FamilyGuard.Domain.Tests/FamilyGuard.Domain.Tests.csproj tests/FamilyGuard.Domain.Tests/
 COPY tests/FamilyGuard.Application.Tests/FamilyGuard.Application.Tests.csproj tests/FamilyGuard.Application.Tests/
 COPY tests/FamilyGuard.Infrastructure.Tests/FamilyGuard.Infrastructure.Tests.csproj tests/FamilyGuard.Infrastructure.Tests/
+COPY tests/FamilyGuard.Integration.Tests/FamilyGuard.Integration.Tests.csproj tests/FamilyGuard.Integration.Tests/
 
-# Restore cross-platform projects only (Service/Agent target net10.0-windows)
+# Restore all cross-platform projects (Service/Agent now target net10.0)
 RUN dotnet restore src/FamilyGuard.Domain/ && \
     dotnet restore src/FamilyGuard.Application/ && \
     dotnet restore src/FamilyGuard.Infrastructure/ && \
+    dotnet restore src/FamilyGuard.Service/ && \
+    dotnet restore src/FamilyGuard.Agent/ && \
     dotnet restore tests/FamilyGuard.Domain.Tests/ && \
     dotnet restore tests/FamilyGuard.Application.Tests/ && \
-    dotnet restore tests/FamilyGuard.Infrastructure.Tests/
+    dotnet restore tests/FamilyGuard.Infrastructure.Tests/ && \
+    dotnet restore tests/FamilyGuard.Integration.Tests/
 
 # Copy all source
 COPY src/ src/
 COPY tests/ tests/
 
-# Build cross-platform projects
+# Build all cross-platform projects (including Service + Agent)
 RUN dotnet build src/FamilyGuard.Domain/ --no-restore && \
     dotnet build src/FamilyGuard.Application/ --no-restore && \
     dotnet build src/FamilyGuard.Infrastructure/ --no-restore && \
+    dotnet build src/FamilyGuard.Service/ --no-restore && \
+    dotnet build src/FamilyGuard.Agent/ --no-restore && \
     dotnet build tests/FamilyGuard.Domain.Tests/ --no-restore && \
     dotnet build tests/FamilyGuard.Application.Tests/ --no-restore && \
-    dotnet build tests/FamilyGuard.Infrastructure.Tests/ --no-restore
+    dotnet build tests/FamilyGuard.Infrastructure.Tests/ --no-restore && \
+    dotnet build tests/FamilyGuard.Integration.Tests/ --no-restore
 
 # Run cross-platform tests
 RUN dotnet test tests/FamilyGuard.Domain.Tests/ --no-build --logger "console;verbosity=detailed" && \
     dotnet test tests/FamilyGuard.Application.Tests/ --no-build --logger "console;verbosity=detailed" && \
     dotnet test tests/FamilyGuard.Infrastructure.Tests/ --no-build --logger "console;verbosity=detailed"
+
+# Cross-compile Service + Agent for Windows
+RUN dotnet publish src/FamilyGuard.Service/ -c Release -r win-x64 --self-contained false -o /publish/service && \
+    dotnet publish src/FamilyGuard.Agent/ -c Release -r win-x64 --self-contained false -o /publish/agent

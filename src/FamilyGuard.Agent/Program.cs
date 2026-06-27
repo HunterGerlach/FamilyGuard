@@ -62,10 +62,12 @@ builder.Services.AddSingleton(sp =>
 });
 
 // Platform — Windows adapters
+#if WINDOWS
 if (OperatingSystem.IsWindows())
 {
     AgentPlatformRegistration.RegisterWindowsServices(builder.Services);
 }
+#endif
 
 // Hosted service
 builder.Services.AddHostedService<AgentWorker>();

@@ -1,3 +1,4 @@
+#if WINDOWS
 using FamilyGuard.Application.Ports.Input;
 using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Infrastructure.Platform.Windows;
@@ -21,3 +22,4 @@ public static class AgentPlatformRegistration
         services.AddSingleton<ISystemEventMonitor, SystemEventMonitor>();
     }
 }
+#endif

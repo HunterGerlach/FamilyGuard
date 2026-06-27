@@ -10,7 +10,9 @@ public sealed class PolicyRule
     public IReadOnlyList<PolicyCondition> Conditions { get; }
     public IReadOnlyList<PolicyAction> Actions { get; }
 
-    private readonly HashSet<string>? _appliesToUsers;
+    public IReadOnlyList<string>? AppliesToUsers { get; }
+
+    private readonly HashSet<string>? _appliesToUsersSet;
 
     public PolicyRule(
         string id,
@@ -25,13 +27,14 @@ public sealed class PolicyRule
         Enabled = enabled;
         Conditions = conditions ?? [];
         Actions = actions ?? [];
-        _appliesToUsers = appliesToUsers is { Count: > 0 }
+        AppliesToUsers = appliesToUsers;
+        _appliesToUsersSet = appliesToUsers is { Count: > 0 }
             ? new HashSet<string>(appliesToUsers, StringComparer.OrdinalIgnoreCase)
             : null;
     }
 
     public bool AppliesToUser(string windowsUser)
     {
-        return _appliesToUsers is null || _appliesToUsers.Contains(windowsUser);
+        return _appliesToUsersSet is null || _appliesToUsersSet.Contains(windowsUser);
     }
 }

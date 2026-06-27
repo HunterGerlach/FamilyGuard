@@ -22,19 +22,24 @@ public sealed class PolicyRule
         IReadOnlyList<PolicyAction>? actions = null,
         IReadOnlyList<string>? appliesToUsers = null)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
         Id = id;
         Name = name;
         Enabled = enabled;
-        Conditions = conditions ?? [];
-        Actions = actions ?? [];
-        AppliesToUsers = appliesToUsers;
-        _appliesToUsersSet = appliesToUsers is { Count: > 0 }
-            ? new HashSet<string>(appliesToUsers, StringComparer.OrdinalIgnoreCase)
+        Conditions = conditions?.ToArray() ?? [];
+        Actions = actions?.ToArray() ?? [];
+        AppliesToUsers = appliesToUsers?.ToArray();
+        _appliesToUsersSet = AppliesToUsers is { Count: > 0 }
+            ? new HashSet<string>(AppliesToUsers, StringComparer.OrdinalIgnoreCase)
             : null;
     }
 
     public bool AppliesToUser(string windowsUser)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(windowsUser);
+
         return _appliesToUsersSet is null || _appliesToUsersSet.Contains(windowsUser);
     }
 }

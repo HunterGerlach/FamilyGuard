@@ -21,8 +21,10 @@ public sealed class PresenceStateMachine
 
     public PresenceStateMachine(int timeoutSeconds, TimeProvider clock)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(timeoutSeconds);
+
         _timeoutSeconds = timeoutSeconds;
-        _clock = clock;
+        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
     public void RecordActivity()

@@ -1,6 +1,6 @@
 using System.Reflection;
-using FamilyGuard.Application.Ports.Input;
 using FamilyGuard.Application.Ports.Output;
+using FamilyGuard.Application.UseCases;
 using FamilyGuard.Domain.Entities;
 using FamilyGuard.Domain.Enums;
 using FamilyGuard.Domain.ValueObjects;
@@ -11,8 +11,7 @@ namespace FamilyGuard.Service;
 
 public sealed class ServiceWorker : BackgroundService
 {
-    private readonly ISessionMonitor _sessions;
-    private readonly IAgentLifecycleManager _agents;
+    private readonly SuperviseSessionsUseCase _superviseSessions;
     private readonly IEventStore _eventStore;
     private readonly IUpdateChecker? _updateChecker;
     private readonly ILogger<ServiceWorker> _logger;
@@ -21,16 +20,14 @@ public sealed class ServiceWorker : BackgroundService
     private static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(6);
 
     public ServiceWorker(
-        ISessionMonitor sessions,
-        IAgentLifecycleManager agents,
+        SuperviseSessionsUseCase superviseSessions,
         IEventStore eventStore,
         ILogger<ServiceWorker> logger,
         IUpdateChecker? updateChecker = null)
     {
-        _sessions = sessions;
-        _agents = agents;
-        _eventStore = eventStore;
-        _logger = logger;
+        _superviseSessions = superviseSessions ?? throw new ArgumentNullException(nameof(superviseSessions));
+        _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _updateChecker = updateChecker;
     }
 
@@ -66,27 +63,7 @@ public sealed class ServiceWorker : BackgroundService
 
     private void SuperviseSessions()
     {
-        var activeSessions = _sessions.GetActiveInteractiveSessions();
-        var runningAgents = _agents.GetRunningAgentSessions();
-
-        foreach (var session in activeSessions)
-        {
-            if (!_agents.IsAgentRunning(session))
-            {
-                _logger.LogInformation("Launching agent for session {SessionId}", session.Value);
-                _agents.LaunchAgent(session);
-            }
-        }
-
-        var activeSet = new HashSet<int>(activeSessions.Select(s => s.Value));
-        foreach (var agentSession in runningAgents)
-        {
-            if (!activeSet.Contains(agentSession.Value))
-            {
-                _logger.LogInformation("Stopping agent for departed session {SessionId}", agentSession.Value);
-                _agents.StopAgent(agentSession);
-            }
-        }
+        _superviseSessions.Execute();
     }
 
     private async Task CheckForUpdatesIfDue(CancellationToken ct)
@@ -126,11 +103,7 @@ public sealed class ServiceWorker : BackgroundService
 
     private void ShutdownAllAgents()
     {
-        foreach (var session in _agents.GetRunningAgentSessions())
-        {
-            _logger.LogInformation("Stopping agent for session {SessionId} during shutdown", session.Value);
-            _agents.StopAgent(session);
-        }
+        _superviseSessions.ShutdownAll();
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)

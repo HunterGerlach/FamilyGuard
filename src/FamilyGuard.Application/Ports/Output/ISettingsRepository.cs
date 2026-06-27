@@ -4,6 +4,7 @@ public interface ISettingsRepository
 {
     ProtectedSettings Load();
     void Save(ProtectedSettings settings);
+    void SetPin(string pin);
     bool VerifyPin(string pin);
 }
 

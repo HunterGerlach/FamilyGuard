@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- WPF UI — Windows only -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\dad-icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FamilyGuard.Application\FamilyGuard.Application.csproj" />
+    <ProjectReference Include="..\FamilyGuard.Infrastructure\FamilyGuard.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.*" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.*" />
+  </ItemGroup>
+</Project>

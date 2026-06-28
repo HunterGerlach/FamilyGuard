@@ -141,7 +141,8 @@ jobs:
 
           if (Test-Path publish/FamilyGuard.msi) {
             $version = "${{ github.ref_name }}".TrimStart('v')
-            $versionedName = "FamilyGuard-$version.msi"
+            $short = "${{ github.sha }}".Substring(0, 7)
+            $versionedName = "FamilyGuard-$version-$short.msi"
             Move-Item publish/FamilyGuard.msi "publish/$versionedName"
             $size = (Get-Item "publish/$versionedName").Length / 1MB
             Write-Host "MSI built successfully: $versionedName ($([math]::Round($size, 1)) MB)"
@@ -154,7 +155,8 @@ jobs:
           CODE_SIGNING_PASSWORD: ${{ secrets.CODE_SIGNING_PASSWORD }}
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          $msiPath = "publish/FamilyGuard-$version.msi"
+          $short = "${{ github.sha }}".Substring(0, 7)
+          $msiPath = "publish/FamilyGuard-$version-$short.msi"
           if (-not (Test-Path $msiPath)) { Write-Host "No MSI to sign"; exit 0 }
 
           $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" |
@@ -178,7 +180,8 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          $msiName = "FamilyGuard-$version.msi"
+          $short = "${{ github.sha }}".Substring(0, 7)
+          $msiName = "FamilyGuard-$version-$short.msi"
           $msiPath = "publish/$msiName"
           $hash = if (Test-Path $msiPath) { (Get-FileHash $msiPath -Algorithm SHA256).Hash } else { "N/A" }
           $manifest = @{

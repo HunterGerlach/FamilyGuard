@@ -72,6 +72,8 @@
                         <MenuItem Header="Event Log" Click="ShowEventLog_Click" />
                         <Separator />
                         <MenuItem Header="About DAD" Click="ShowAbout_Click" />
+                        <Separator />
+                        <MenuItem Header="Exit" Click="Exit_Click" />
                     </ContextMenu>
                 </tb:TaskbarIcon.ContextMenu>
             </tb:TaskbarIcon>

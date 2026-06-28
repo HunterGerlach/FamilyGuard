@@ -110,13 +110,25 @@ public partial class App : System.Windows.Application
 
     private void ShowAbout_Click(object sender, RoutedEventArgs e)
     {
+        var asm = System.Reflection.Assembly.GetExecutingAssembly();
+        var version = asm.GetName().Version?.ToString(3) ?? "0.0.0";
+        var infoVersion = asm.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? version;
+
         MessageBox.Show(
-            "DAD — Digital Activity Defender\n\n" +
-            "A transparent family computer guidance app.\n" +
-            "https://github.com/HunterGerlach/FamilyGuard",
+            $"DAD — Digital Activity Defender\n\n" +
+            $"Version: {infoVersion}\n\n" +
+            $"A transparent family computer guidance app.\n" +
+            $"https://github.com/HunterGerlach/FamilyGuard",
             "About DAD",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
+    }
+
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Log("User requested exit");
+        Shutdown();
     }
 
     private static void ShowOrActivateWindow<T>() where T : Window, new()

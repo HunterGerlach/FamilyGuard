@@ -7,9 +7,9 @@ using FamilyGuard.UI.ViewModels;
 namespace FamilyGuard.UI.Resources;
 
 /// <summary>
-/// Generates tray icons as on-disk PNG files referenced via file:// URI.
-/// H.NotifyIcon accepts PNG via BitmapImage(Uri) — confirmed working
-/// in production (ui.log: "Tray icon created successfully" at 13:34).
+/// Generates tray icons as .ico files on disk.
+/// H.NotifyIcon converts ImageSource to System.Drawing.Icon which
+/// only accepts ICO format — PNG causes delayed APPCRASH.
 /// </summary>
 public static class TrayIconGenerator
 {
@@ -35,8 +35,8 @@ public static class TrayIconGenerator
             _ => Colors.Gray
         };
 
-        var filePath = Path.Combine(IconDir, $"tray-{state}.png");
-        RenderShieldToPng(color, 64, filePath);
+        var filePath = Path.Combine(IconDir, $"tray-{state}.ico");
+        WriteIcoFile(color, 32, filePath);
 
         var image = new BitmapImage(new Uri(filePath, UriKind.Absolute));
         image.Freeze();
@@ -44,8 +44,9 @@ public static class TrayIconGenerator
         return image;
     }
 
-    private static void RenderShieldToPng(Color fillColor, int size, string outputPath)
+    private static void WriteIcoFile(Color fillColor, int size, string outputPath)
     {
+        // Step 1: Render the shield to a WPF bitmap
         var visual = new DrawingVisual();
         using (var ctx = visual.RenderOpen())
         {
@@ -59,7 +60,6 @@ public static class TrayIconGenerator
             double s = size;
             double m = s * 0.06;
 
-            // Shield shape
             var geometry = new StreamGeometry();
             using (var sgc = geometry.Open())
             {
@@ -74,7 +74,6 @@ public static class TrayIconGenerator
             geometry.Freeze();
             ctx.DrawGeometry(brush, pen, geometry);
 
-            // "D" letter
             var letterBrush = new SolidColorBrush(Colors.White);
             letterBrush.Freeze();
             var text = new FormattedText(
@@ -88,12 +87,56 @@ public static class TrayIconGenerator
             ctx.DrawText(text, new Point((s - text.Width) / 2, (s - text.Height) / 2));
         }
 
-        var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
+        // Render with Pbgra32 (the only format RenderTargetBitmap supports)
+        var rtb = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+        rtb.Render(visual);
 
-        var encoder = new PngBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using var stream = File.Create(outputPath);
-        encoder.Save(stream);
+        // Step 2: Convert to Bgra32 pixel data for the ICO file
+        var converted = new FormatConvertedBitmap(rtb, PixelFormats.Bgra32, null, 0);
+        var stride = size * 4;
+        var pixels = new byte[stride * size];
+        converted.CopyPixels(pixels, stride, 0);
+
+        // Step 3: Write ICO binary format
+        using var fs = File.Create(outputPath);
+        using var bw = new BinaryWriter(fs);
+
+        // ICO header
+        bw.Write((short)0);   // reserved
+        bw.Write((short)1);   // type: icon
+        bw.Write((short)1);   // image count
+
+        // AND mask (1 bit per pixel, rows padded to 4 bytes)
+        var andRowBytes = ((size + 31) / 32) * 4;
+        var andMaskSize = andRowBytes * size;
+        var bmpHeaderSize = 40;
+        var imageDataSize = bmpHeaderSize + pixels.Length + andMaskSize;
+
+        // Directory entry
+        bw.Write((byte)(size < 256 ? size : 0));
+        bw.Write((byte)(size < 256 ? size : 0));
+        bw.Write((byte)0);    // no palette
+        bw.Write((byte)0);    // reserved
+        bw.Write((short)1);   // color planes
+        bw.Write((short)32);  // bits per pixel
+        bw.Write(imageDataSize);
+        bw.Write(6 + 16);     // offset (header=6 + one entry=16)
+
+        // BITMAPINFOHEADER
+        bw.Write(bmpHeaderSize);
+        bw.Write(size);
+        bw.Write(size * 2);   // height doubled for ICO (XOR + AND)
+        bw.Write((short)1);   // planes
+        bw.Write((short)32);  // bpp
+        bw.Write(0);          // compression
+        bw.Write(pixels.Length + andMaskSize);
+        bw.Write(0); bw.Write(0); bw.Write(0); bw.Write(0);
+
+        // Pixel data (bottom-up row order)
+        for (int y = size - 1; y >= 0; y--)
+            bw.Write(pixels, y * stride, stride);
+
+        // AND mask (all zeros = fully visible, alpha handles transparency)
+        bw.Write(new byte[andMaskSize]);
     }
 }

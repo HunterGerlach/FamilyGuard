@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using FamilyGuard.UI.ViewModels;

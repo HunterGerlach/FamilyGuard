@@ -7,9 +7,9 @@ using FamilyGuard.UI.ViewModels;
 namespace FamilyGuard.UI.Resources;
 
 /// <summary>
-/// Generates tray icons as on-disk PNG files referenced via file:// URI.
-/// H.NotifyIcon requires URI-backed ImageSource — MemoryStream-based
-/// BitmapImage causes ArgumentNullException in ToStream(Uri uri).
+/// Generates tray icons as .ico files on disk.
+/// H.NotifyIcon requires: URI-backed ImageSource that resolves to
+/// a valid ICO file (not PNG). We write ICO format with embedded PNG.
 /// </summary>
 public static class TrayIconGenerator
 {
@@ -35,8 +35,8 @@ public static class TrayIconGenerator
             _ => Colors.Gray
         };
 
-        var filePath = Path.Combine(IconDir, $"tray-{state}.png");
-        RenderShieldToPng(color, 64, filePath);
+        var filePath = Path.Combine(IconDir, $"tray-{state}.ico");
+        RenderShieldToIco(color, 32, filePath);
 
         var image = new BitmapImage(new Uri(filePath, UriKind.Absolute));
         image.Freeze();
@@ -44,8 +44,9 @@ public static class TrayIconGenerator
         return image;
     }
 
-    private static void RenderShieldToPng(Color fillColor, int size, string outputPath)
+    private static void RenderShieldToIco(Color fillColor, int size, string outputPath)
     {
+        // Render the shield to a bitmap
         var visual = new DrawingVisual();
         using (var ctx = visual.RenderOpen())
         {
@@ -53,11 +54,11 @@ public static class TrayIconGenerator
             brush.Freeze();
             var borderBrush = new SolidColorBrush(Color.FromArgb(180, 0, 0, 0));
             borderBrush.Freeze();
-            var pen = new Pen(borderBrush, size * 0.04);
+            var pen = new Pen(borderBrush, size * 0.06);
             pen.Freeze();
 
             double s = size;
-            double m = s * 0.08;
+            double m = s * 0.06;
 
             // Shield shape
             var geometry = new StreamGeometry();
@@ -82,18 +83,66 @@ public static class TrayIconGenerator
                 System.Globalization.CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight,
                 new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal),
-                s * 0.42,
+                s * 0.5,
                 letterBrush,
                 96);
-            ctx.DrawText(text, new Point((s - text.Width) / 2, (s - text.Height) / 2 - s * 0.02));
+            ctx.DrawText(text, new Point((s - text.Width) / 2, (s - text.Height) / 2));
         }
 
-        var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
+        var renderBitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Bgra32);
+        renderBitmap.Render(visual);
 
-        var encoder = new PngBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using var stream = File.Create(outputPath);
-        encoder.Save(stream);
+        // Get raw BGRA pixel data
+        var stride = size * 4;
+        var pixels = new byte[stride * size];
+        renderBitmap.CopyPixels(pixels, stride, 0);
+
+        // Write ICO file format (BMP-based, not PNG)
+        using var fs = File.Create(outputPath);
+        using var bw = new BinaryWriter(fs);
+
+        // ICO header: reserved(2) + type=1(2) + count=1(2)
+        bw.Write((short)0);      // reserved
+        bw.Write((short)1);      // type: icon
+        bw.Write((short)1);      // image count
+
+        // ICO directory entry (16 bytes)
+        var bmpInfoSize = 40;
+        var pixelDataSize = pixels.Length;
+        // AND mask: 1 bit per pixel, padded to 4 bytes per row
+        var andMaskRowBytes = ((size + 31) / 32) * 4;
+        var andMaskSize = andMaskRowBytes * size;
+        var imageSize = bmpInfoSize + pixelDataSize + andMaskSize;
+
+        bw.Write((byte)size);     // width (0 = 256)
+        bw.Write((byte)size);     // height
+        bw.Write((byte)0);        // color palette
+        bw.Write((byte)0);        // reserved
+        bw.Write((short)1);       // color planes
+        bw.Write((short)32);      // bits per pixel
+        bw.Write(imageSize);      // image data size
+        bw.Write(6 + 16);         // offset to image data (header + 1 entry)
+
+        // BITMAPINFOHEADER (40 bytes)
+        bw.Write(bmpInfoSize);    // header size
+        bw.Write(size);           // width
+        bw.Write(size * 2);       // height (doubled for ICO: XOR + AND)
+        bw.Write((short)1);       // planes
+        bw.Write((short)32);      // bpp
+        bw.Write(0);              // compression (none)
+        bw.Write(pixelDataSize + andMaskSize); // image size
+        bw.Write(0);              // x pixels per meter
+        bw.Write(0);              // y pixels per meter
+        bw.Write(0);              // colors used
+        bw.Write(0);              // important colors
+
+        // Write pixel data (bottom-up order for BMP)
+        for (int y = size - 1; y >= 0; y--)
+        {
+            bw.Write(pixels, y * stride, stride);
+        }
+
+        // AND mask (all zeros = fully opaque, alpha channel handles transparency)
+        bw.Write(new byte[andMaskSize]);
     }
 }

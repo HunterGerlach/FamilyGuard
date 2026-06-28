@@ -109,8 +109,10 @@ jobs:
           $wxs | Out-File -FilePath installer/HarvestedFiles.wxs -Encoding utf8
           Write-Host "Generated HarvestedFiles.wxs with $($allFiles.Count) files"
 
+          $productVersion = "${{ github.ref_name }}".TrimStart('v')
           wix build installer/Package.wxs installer/HarvestedFiles.wxs `
             -d PublishDir=publish/app `
+            -d "ProductVersion=$productVersion" `
             -o publish/FamilyGuard.msi
 
           if (Test-Path publish/FamilyGuard.msi) {

@@ -38,6 +38,23 @@ public partial class SettingsWindow : Window
         Close();
     }
 
+    private void UpdateChannel_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (CustomChannelUrl is null) return;
+
+        var selected = UpdateChannelCombo.SelectedItem as System.Windows.Controls.ComboBoxItem;
+        CustomChannelUrl.Visibility = selected?.Tag?.ToString() == "custom"
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        // TODO: Wire to IUpdateChecker.CheckForUpdateAsync via DI
+        MessageBox.Show("Update check triggered. See the event log for results.",
+            "DAD", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e)
     {
         Close();

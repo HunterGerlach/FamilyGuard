@@ -1,0 +1,104 @@
+name: Branch Build (Pre-Release)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_prerelease:
+        description: 'Publish as GitHub pre-release'
+        type: boolean
+        default: false
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'ga'
+
+      - name: Determine version tag
+        id: version
+        shell: pwsh
+        run: |
+          $branch = "${{ github.ref_name }}" -replace '[^a-zA-Z0-9\-]', '-'
+          $short = "${{ github.sha }}".Substring(0, 7)
+          $tag = "0.0.0-${branch}.${short}"
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version tag: $tag"
+
+      - name: Restore
+        run: dotnet restore FamilyGuard.sln
+
+      - name: Test
+        run: |
+          dotnet test tests/FamilyGuard.Domain.Tests/ -c Release
+          dotnet test tests/FamilyGuard.Application.Tests/ -c Release
+          dotnet test tests/FamilyGuard.Infrastructure.Tests/ -c Release
+
+      - name: Publish Service
+        run: dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 -o publish/service --self-contained false
+
+      - name: Publish Agent
+        run: dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 -o publish/agent --self-contained false
+
+      - name: Publish UI
+        run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 -o publish/ui --self-contained false
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix --version 5.0.2
+
+      - name: Build MSI
+        run: |
+          wix build installer/Package.wxs `
+            -d ServicePublishDir=publish/service `
+            -d AgentPublishDir=publish/agent `
+            -d UIPublishDir=publish/ui `
+            -o publish/FamilyGuard.msi
+        continue-on-error: true
+
+      - name: Generate update manifest
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.tag }}"
+          $msiPath = "publish/FamilyGuard.msi"
+          $hash = if (Test-Path $msiPath) { (Get-FileHash $msiPath -Algorithm SHA256).Hash } else { "N/A" }
+          $manifest = @{
+            version = $version
+            sha256 = $hash
+            download_url = "https://github.com/${{ github.repository }}/releases/download/v$version/FamilyGuard.msi"
+            released_at = (Get-Date -Format "o")
+          } | ConvertTo-Json
+          $manifest | Out-File -FilePath publish/update-manifest.json -Encoding utf8
+          Write-Host $manifest
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: familyguard-branch-${{ steps.version.outputs.tag }}
+          path: publish/
+
+      - name: Create pre-release
+        if: inputs.publish_prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.tag }}
+          name: Branch build ${{ steps.version.outputs.tag }}
+          prerelease: true
+          generate_release_notes: false
+          body: |
+            Branch build from `${{ github.ref_name }}` at ${{ github.sha }}.
+
+            **This is a pre-release for testing.** Point your DAD update channel to:
+            ```
+            https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.tag }}/update-manifest.json
+            ```
+          files: |
+            publish/FamilyGuard.msi
+            publish/update-manifest.json

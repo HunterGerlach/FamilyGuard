@@ -27,7 +27,16 @@
                           Type="ownProcess"
                           Start="auto"
                           ErrorControl="normal"
-                          Account="LocalSystem" />
+                          Account="LocalSystem">
+            <!-- Recovery: restart on failure (60s, 120s, 300s) -->
+            <ServiceConfig DelayedAutoStart="no"
+                           FailureActionsWhen="failedToStop"
+                           ResetPeriodInDays="1"
+                           RestartServiceDelayInSeconds="60"
+                           SecondFailureActionType="restart"
+                           ThirdFailureActionType="restart"
+                           FirstFailureActionType="restart" />
+          </ServiceInstall>
 
           <ServiceControl Id="StartFamilyGuardService"
                           Name="FamilyGuard"

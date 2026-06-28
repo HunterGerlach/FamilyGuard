@@ -51,6 +51,9 @@ public sealed class ServiceWorker : BackgroundService
         _eventStore.Append(StructuredEvent.Create(
             EventType.ServiceStarted, "SYSTEM", new SessionId(0)));
 
+        // Clean up orphan agents from previous installs/restarts
+        KillOrphanAgents();
+
         // Clean up any temp files from previous failed updates
         _updateInstaller?.CleanupTempFiles();
 
@@ -127,6 +130,35 @@ public sealed class ServiceWorker : BackgroundService
         // Auto-update mode: download, verify, apply
         _logger.LogInformation("Auto-update enabled — applying update {Version}", update.Version);
         await _applyUpdate.ExecuteAsync(update, ct);
+    }
+
+    private void KillOrphanAgents()
+    {
+        try
+        {
+            var currentProcessId = Environment.ProcessId;
+            foreach (var proc in System.Diagnostics.Process.GetProcessesByName("FamilyGuard.Agent"))
+            {
+                try
+                {
+                    _logger.LogInformation("Killing orphan agent (PID {Pid})", proc.Id);
+                    proc.Kill(entireProcessTree: true);
+                    proc.WaitForExit(3000);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to kill orphan agent PID {Pid}", proc.Id);
+                }
+                finally
+                {
+                    proc.Dispose();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error cleaning up orphan agents");
+        }
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)

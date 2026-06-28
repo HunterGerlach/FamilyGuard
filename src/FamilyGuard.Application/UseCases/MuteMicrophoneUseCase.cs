@@ -43,7 +43,7 @@ public sealed class MuteMicrophoneUseCase
             details: details));
 
         _notifier.ShowNotification(
-            "DaD",
+            "DAD",
             "Microphone was muted because nobody appeared active at the computer.");
     }
 }

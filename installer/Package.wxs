@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
-  <Package Name="DaD - Digital Activity Defender"
+  <Package Name="DAD - Digital Activity Defender"
            Manufacturer="FamilyGuard"
            Version="0.1.0"
            UpgradeCode="E7A1B2C3-D4E5-F6A7-B8C9-D0E1F2A3B4C5"
            Scope="perMachine">
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of DaD is already installed."
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DAD is already installed."
                   AllowSameVersionUpgrades="yes" />
 
     <!-- Install directory -->
@@ -23,7 +23,7 @@
           <ServiceInstall Id="FamilyGuardService"
                           Name="FamilyGuard"
                           DisplayName="FamilyGuard Service"
-                          Description="DaD - Digital Activity Defender. Family endpoint guidance service."
+                          Description="DAD - Digital Activity Defender. Family endpoint guidance service."
                           Type="ownProcess"
                           Start="auto"
                           ErrorControl="normal"
@@ -92,7 +92,7 @@
     </StandardDirectory>
 
     <!-- Feature tree -->
-    <Feature Id="Complete" Title="DaD" Level="1">
+    <Feature Id="Complete" Title="DAD" Level="1">
       <ComponentRef Id="ServiceExe" />
       <ComponentRef Id="ServiceDeps" />
       <ComponentRef Id="AgentExe" />
@@ -103,7 +103,7 @@
     </Feature>
 
     <!-- Launch conditions -->
-    <Launch Condition="Privileged" Message="Administrator privileges are required to install DaD." />
+    <Launch Condition="Privileged" Message="Administrator privileges are required to install DAD." />
 
   </Package>
 </Wix>

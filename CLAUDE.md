@@ -1,13 +1,23 @@
-# CLAUDE.md — FamilyGuard / DaD
+# CLAUDE.md — FamilyGuard
 
 ## Project
 
-DaD (Digital Activity Defender) / FamilyGuard — a transparent Windows background app for family computer guidance. V1 feature: auto-mute microphone when child walks away from computer.
+**FamilyGuard** is a multi-tool family computer guidance platform. **DAD** (Digital Activity Defender) is the first tool. Future tools include **MOM** (TBD) and others. All tools share the FamilyGuard service, infrastructure, and UI shell.
+
+## Naming
+
+| Context | Use |
+|---|---|
+| Platform / service / technical | **FamilyGuard** |
+| First tool (user-facing) | **DAD** (all caps, never "DaD") |
+| Future tools | **MOM**, others (all caps) |
+| Namespaces / projects | `FamilyGuard.*` |
+| XAML design tokens | `FG` prefix (FGBlue, FGInkBrush) |
 
 ## Build
 
 ```bash
-# Cross-platform build + test (macOS/Fedora/Linux)
+# Cross-platform build + test + cross-compile (macOS/Fedora/Linux)
 podman build -f build/Containerfile -t familyguard-build .
 
 # Full solution build (Windows only)
@@ -38,20 +48,22 @@ Windows API calls exist ONLY in `Infrastructure/Platform/Windows/` and are:
 - TFMs: Domain/Application/Infrastructure/Service/Agent use `net10.0`; UI uses `net10.0-windows`
 - Cross-compilation: Service + Agent cross-compile for `win-x64` from Linux containers
 - Tests: xUnit + NSubstitute + Shouldly (NOT FluentAssertions — commercial license v8+)
-- Assertions: Shouldly (MIT). Never use FluentAssertions.
 - Container: Podman + UBI 9 (`ubi9/dotnet-100`). Never Docker.
-- SQLitePCLRaw vulnerability suppressed globally (GHSA-2m69-gcr7-jv3q) — no upstream fix yet
+- SQLitePCLRaw vulnerability suppressed globally (GHSA-2m69-gcr7-jv3q)
 
 ## CI
 
-- Linux CI: Podman build in GitHub Actions — builds all, tests all, cross-publishes win-x64 binaries
+- Linux CI: Podman build — builds all, tests all, cross-publishes win-x64 binaries as artifacts
 - Windows CI: Full solution build including WPF UI + integration tests
-- Release: On tag push — build, test, publish, sign (Authenticode), WiX MSI, update manifest, GitHub Release
+- Release: On tag push — build, test, sign (Authenticode), WiX MSI, update manifest, GitHub Release
 
 ## Code Signing
 
-- Self-signed dev cert stored as GitHub Actions secrets (`CODE_SIGNING_CERT`, `CODE_SIGNING_PASSWORD`)
-- Release workflow decodes PFX, signs .exe files + MSI with signtool, timestamps via DigiCert
-- Cert is cleaned up after signing (never persisted on runner)
-- `.certs/` directory is gitignored — never commit certificates
-- For production: replace the GitHub secret with a CA-issued code signing cert (same workflow, just swap the PFX)
+- Self-signed dev cert in GitHub secrets (`CODE_SIGNING_CERT`, `CODE_SIGNING_PASSWORD`)
+- Release workflow signs .exe + MSI with signtool (SHA256 + DigiCert timestamp)
+- `.certs/` is gitignored — never commit certificates
+- For production: replace secret with CA-issued cert (same workflow)
+
+## Documentation
+
+Detailed docs in `docs/` — see README.md for the index.

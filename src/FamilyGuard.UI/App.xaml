@@ -5,21 +5,21 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
-            <Color x:Key="DadBlue">#2563EB</Color>
-            <Color x:Key="DadInk">#111827</Color>
-            <Color x:Key="DadMutedInk">#4B5563</Color>
-            <Color x:Key="DadSurface">#F8FAFC</Color>
-            <Color x:Key="DadBorder">#D1D5DB</Color>
-            <SolidColorBrush x:Key="DadBlueBrush" Color="{StaticResource DadBlue}" />
-            <SolidColorBrush x:Key="DadInkBrush" Color="{StaticResource DadInk}" />
-            <SolidColorBrush x:Key="DadMutedInkBrush" Color="{StaticResource DadMutedInk}" />
-            <SolidColorBrush x:Key="DadSurfaceBrush" Color="{StaticResource DadSurface}" />
-            <SolidColorBrush x:Key="DadBorderBrush" Color="{StaticResource DadBorder}" />
+            <Color x:Key="FGBlue">#2563EB</Color>
+            <Color x:Key="FGInk">#111827</Color>
+            <Color x:Key="FGMutedInk">#4B5563</Color>
+            <Color x:Key="FGSurface">#F8FAFC</Color>
+            <Color x:Key="FGBorder">#D1D5DB</Color>
+            <SolidColorBrush x:Key="FGBlueBrush" Color="{StaticResource FGBlue}" />
+            <SolidColorBrush x:Key="FGInkBrush" Color="{StaticResource FGInk}" />
+            <SolidColorBrush x:Key="FGMutedInkBrush" Color="{StaticResource FGMutedInk}" />
+            <SolidColorBrush x:Key="FGSurfaceBrush" Color="{StaticResource FGSurface}" />
+            <SolidColorBrush x:Key="FGBorderBrush" Color="{StaticResource FGBorder}" />
 
             <Style TargetType="Window">
                 <Setter Property="FontFamily" Value="Segoe UI" />
                 <Setter Property="FontSize" Value="14" />
-                <Setter Property="Foreground" Value="{StaticResource DadInkBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource FGInkBrush}" />
                 <Setter Property="Background" Value="White" />
             </Style>
 
@@ -31,34 +31,34 @@
             </Style>
 
             <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                <Setter Property="Background" Value="{StaticResource DadBlueBrush}" />
+                <Setter Property="Background" Value="{StaticResource FGBlueBrush}" />
                 <Setter Property="Foreground" Value="White" />
-                <Setter Property="BorderBrush" Value="{StaticResource DadBlueBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource FGBlueBrush}" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
 
             <Style x:Key="PageTitle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="22" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Foreground" Value="{StaticResource DadInkBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource FGInkBrush}" />
             </Style>
 
             <Style x:Key="HelpText" TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{StaticResource DadMutedInkBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource FGMutedInkBrush}" />
                 <Setter Property="TextWrapping" Value="Wrap" />
                 <Setter Property="LineHeight" Value="20" />
             </Style>
 
             <Style x:Key="Card" TargetType="Border">
-                <Setter Property="Background" Value="{StaticResource DadSurfaceBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource DadBorderBrush}" />
+                <Setter Property="Background" Value="{StaticResource FGSurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource FGBorderBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
                 <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Padding" Value="16" />
             </Style>
 
             <tb:TaskbarIcon x:Key="TrayIcon"
-                            ToolTipText="DaD - Digital Activity Defender"
+                            ToolTipText="DAD - Digital Activity Defender"
                             MenuActivation="LeftOrRightClick"
                             NoLeftClickDelay="True">
                 <tb:TaskbarIcon.ContextMenu>
@@ -71,7 +71,7 @@
                         <MenuItem Header="Settings..." Click="ShowSettings_Click" />
                         <MenuItem Header="Event Log" Click="ShowEventLog_Click" />
                         <Separator />
-                        <MenuItem Header="About DaD" Click="ShowAbout_Click" />
+                        <MenuItem Header="About DAD" Click="ShowAbout_Click" />
                     </ContextMenu>
                 </tb:TaskbarIcon.ContextMenu>
             </tb:TaskbarIcon>

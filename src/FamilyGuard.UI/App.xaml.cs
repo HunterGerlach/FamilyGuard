@@ -56,10 +56,10 @@ public partial class App : System.Windows.Application
     private void ShowAbout_Click(object sender, RoutedEventArgs e)
     {
         MessageBox.Show(
-            "DaD — Digital Activity Defender\n\n" +
+            "DAD — Digital Activity Defender\n\n" +
             "A transparent family computer guidance app.\n" +
             "https://github.com/HunterGerlach/FamilyGuard",
-            "About DaD",
+            "About DAD",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }

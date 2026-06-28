@@ -1,7 +1,7 @@
 <Window x:Class="FamilyGuard.UI.Views.PinSetupWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="DaD — Parent PIN Setup" Height="390" Width="520"
+        Title="DAD — Parent PIN Setup" Height="390" Width="520"
         MinHeight="390" MinWidth="500"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow">
@@ -16,9 +16,9 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Welcome to DaD" Style="{StaticResource PageTitle}" />
+        <TextBlock Grid.Row="0" Text="Welcome to DAD" Style="{StaticResource PageTitle}" />
         <TextBlock Grid.Row="2" Style="{StaticResource HelpText}"
-                   Text="Create a parent PIN to protect settings. Children can see that DaD is running, but they cannot change monitoring rules without this PIN." />
+                   Text="Create a parent PIN to protect settings. Children can see that DAD is running, but they cannot change monitoring rules without this PIN." />
 
         <Border Grid.Row="4" Style="{StaticResource Card}">
             <StackPanel>

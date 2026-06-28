@@ -141,7 +141,7 @@ public sealed class AgentWorker : BackgroundService
                 break;
 
             case PolicyActionType.NotifyChild:
-                _notifier.ShowNotification("DaD", action.Message ?? "Policy action triggered.");
+                _notifier.ShowNotification("DAD", action.Message ?? "Policy action triggered.");
                 break;
 
             case PolicyActionType.LogEvent:

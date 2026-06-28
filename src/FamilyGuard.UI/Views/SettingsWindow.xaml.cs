@@ -34,7 +34,7 @@ public partial class SettingsWindow : Window
         if (!_unlocked) return;
 
         // TODO: Wire to ISettingsRepository.Save
-        MessageBox.Show("Settings saved.", "DaD", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show("Settings saved.", "DAD", MessageBoxButton.OK, MessageBoxImage.Information);
         Close();
     }
 

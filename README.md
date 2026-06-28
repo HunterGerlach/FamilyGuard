@@ -1,155 +1,112 @@
-# DaD — Digital Activity Defender
+# FamilyGuard
 
-DaD (Digital Activity Defender) is a transparent Windows background app for families. It helps parents define, enforce, and audit simple computer-usage policies when a parent is not nearby.
+**FamilyGuard** is an open-source platform for transparent, policy-driven family computer guidance on Windows. It helps parents define and enforce simple safety rules when they are not nearby.
 
-The first release focuses on one practical safety problem: **a child walks away while a microphone is still open in a game or voice chat app.**
+**DAD** (Digital Activity Defender) is the first tool in the FamilyGuard family. Future tools — including **MOM** and others — will extend the platform with additional guidance capabilities. All tools share FamilyGuard's service infrastructure, policy engine, and data layer.
 
-## Why DaD Exists
+## What DAD Does
 
-Voice chat can stay open after a child leaves the room. DaD reduces that risk by watching for device inactivity and muting the microphone after a parent-configured timeout. It is designed to be visible, understandable, and respectful of privacy.
+DAD's first release solves one practical problem: **a child walks away while a microphone is still open in a game or voice chat app.**
 
-## What DaD Does
+1. DAD detects that the computer appears unattended (keyboard, mouse, and controller all idle).
+2. After the configured timeout (default: 90 seconds), DAD mutes the microphone.
+3. A quiet notification explains what happened.
+4. When the child returns, they manually unmute. DAD **never auto-unmutes**.
 
-When a child is playing games with voice chat (for example Minecraft, Fortnite, Discord, or Xbox party chat) and walks away:
+## What DAD Does Not Do
 
-1. DaD detects that the computer appears unattended by checking keyboard, mouse, controller, and session state.
-2. After the configured timeout (default: 90 seconds), DaD mutes the microphone.
-3. DaD shows a quiet notification explaining what happened.
-4. When the child returns, they manually unmute. DaD **never auto-unmutes**.
+DAD is **not spyware** and does not hide itself.
 
-## What DaD Does Not Do
+DAD does **not**: record audio, transcribe speech, capture screenshots, log keystrokes, read chat contents, inject into games, or try to defeat Windows administrators.
 
-DaD is **not spyware** and does not hide itself from the people using the computer.
+See [docs/security.md](docs/security.md) for the full privacy and threat model.
 
-DaD does **not**:
-
-- Record audio
-- Transcribe speech
-- Capture screenshots
-- Log keystrokes
-- Read chat contents or app messages
-- Inject into games or modify other processes
-- Try to defeat Windows administrators
-
-## User Experience Principles
-
-DaD is built around four product principles:
-
-- **Visible:** the tray icon and status window show what DaD is doing.
-- **Explainable:** policy actions are logged as understandable events.
-- **Parent-controlled:** protected settings require a parent PIN and are rate-limited after failed attempts.
-- **Non-invasive:** DaD uses documented Windows APIs and avoids hooks, DLL injection, and process manipulation.
-
-## Architecture
-
-```text
-FamilyGuard.Service     Windows service (LocalSystem), supervises agents
-FamilyGuard.Agent       Per-user session agent, monitors presence + mic
-FamilyGuard.UI          WPF tray icon + status/settings/event-log windows
-```
-
-DaD follows Clean Architecture with strict dependency direction:
-
-- `Domain` — entities, value objects, events, and enums with zero external dependencies
-- `Application` — use cases, port interfaces, state machine, and policy engine
-- `Infrastructure` — SQLite persistence, Windows API adapters, IPC, and updates
-- `Service`, `Agent`, `UI` — composition roots and host-specific wiring
-
-## Windows APIs Used
-
-DaD uses only documented, non-intrusive Windows APIs:
-
-| Purpose | API |
-|---|---|
-| Keyboard/mouse idle | `GetLastInputInfo` (`user32.dll`) |
-| Controller input | `XInputGetState` (`xinput1_4.dll`) |
-| Microphone mute state | `IAudioEndpointVolume::GetMute` (Core Audio COM) |
-| Microphone mute | `IAudioEndpointVolume::SetMute` (Core Audio COM) |
-| Session enumeration | `WTSEnumerateSessions` (`wtsapi32.dll`) |
-| Session events | `Microsoft.Win32.SystemEvents` |
-
-Because DaD avoids hooks, DLL injection, and process manipulation, the design is intended to remain compatible with anti-cheat software.
-
-## Security Model
-
-DaD is a cooperative family safety tool, not adversarial anti-tamper software.
-
-Recommended Windows account setup:
-
-- Parent Windows account: administrator
-- Child Windows accounts: standard users
-- DaD settings: protected by a parent PIN
-- Protected data directory: ACL'd so standard users cannot modify policy files
-- Uninstall: requires Windows administrator rights
-
-A knowledgeable Windows administrator can disable or remove DaD. DaD does not attempt to hide, persist against administrators, or bypass operating-system controls.
-
-## Privacy and Stored Data
-
-DaD observes and stores operational metadata only:
-
-- Presence/idle duration
-- Controller activity state
-- Session lock/disconnect state
-- Microphone device mute state
-- Policy decisions and actions
-- Service/agent health events
-
-This metadata exists so families can understand what DaD did and why.
-
-## Development
+## Quick Start
 
 ### Prerequisites
 
-- **Podman** for cross-platform development on Linux/macOS
-- **.NET 10 SDK** for local Windows builds and WPF UI work
+- Windows 10 (22H2+) or Windows 11
+- .NET 10 Runtime ([download](https://dotnet.microsoft.com/download/dotnet/10.0))
+- Parent account: Windows administrator
+- Child accounts: Windows standard users
 
-### Build and Test (Cross-Platform)
+### Install from MSI
+
+1. Download `FamilyGuard.msi` from [Releases](https://github.com/HunterGerlach/FamilyGuard/releases).
+2. Run the installer as administrator.
+3. The FamilyGuard service starts automatically and launches a per-user agent for each logged-in session.
+4. On first run, DAD prompts the parent to set a PIN to protect settings.
+
+See [docs/installation.md](docs/installation.md) for manual installation, uninstall, and upgrade details.
+
+### Runtime Behavior
+
+Once installed, FamilyGuard runs silently in the background:
+
+- **System tray icon** shows monitoring status:
+  - Green — monitoring active, user present
+  - Yellow — microphone open and user may be leaving
+  - Orange/Red — microphone was auto-muted
+  - Gray — service disconnected
+- **Right-click the tray icon** to access Status, Settings, Event Log, and manual Mute/Unmute.
+- **Settings require the parent PIN** and are rate-limited after failed attempts.
+- **Events are logged** to `C:\ProgramData\FamilyGuard\familyguard.db` (SQLite).
+
+See [docs/configuration.md](docs/configuration.md) for timeout tuning, covered users, and notification preferences.
+
+## Building from Source
+
+### Cross-Platform (macOS / Fedora / Linux)
 
 ```bash
 podman build -f build/Containerfile -t familyguard-build .
 ```
 
-The container build restores dependencies, builds the cross-platform projects, and runs the cross-platform test suite.
+This builds all cross-platform projects, runs 136 tests, and cross-compiles `FamilyGuard.Service.exe` and `FamilyGuard.Agent.exe` for Windows (win-x64).
 
-### Build Full Solution (Windows)
+### Full Solution (Windows)
 
 ```powershell
 dotnet build FamilyGuard.sln
 dotnet test FamilyGuard.sln
 ```
 
-The WPF UI and Windows platform adapters require Windows for a full local build.
+The WPF UI project requires Windows for compilation. See [CONTRIBUTING.md](CONTRIBUTING.md) for full development setup.
 
-### Project Structure
+## Platform Roadmap
 
-```text
-src/
-  FamilyGuard.Domain/           Entities, enums, value objects, events
-  FamilyGuard.Application/      Use cases, ports, state machine, policy engine
-  FamilyGuard.Infrastructure/   SQLite, Windows adapters, IPC, updates
-  FamilyGuard.Service/          Windows service host
-  FamilyGuard.Agent/            Per-user agent process
-  FamilyGuard.UI/               WPF tray + windows
-tests/
-  FamilyGuard.Domain.Tests/
-  FamilyGuard.Application.Tests/
-  FamilyGuard.Infrastructure.Tests/
-installer/
-  Package.wxs                   WiX MSI installer
-```
+FamilyGuard is designed as a multi-tool family guidance platform:
+
+| Tool | Focus | Status |
+|---|---|---|
+| **DAD** | Digital Activity Defender — endpoint protection (mic safety, presence monitoring) | V1 code-complete |
+| **MOM** | Guidance and education (TBD) | Planned |
+| Future | Additional family member tools | Planned |
+
+All tools share: FamilyGuard.Service, FamilyGuard.Infrastructure, policy engine, event store, settings, and the WPF tray UI shell. See [docs/platform-roadmap.md](docs/platform-roadmap.md) for the full vision.
+
+## Documentation
+
+| Doc | Contents |
+|---|---|
+| [Installation](docs/installation.md) | MSI install, manual install, prerequisites, uninstall, upgrade |
+| [Configuration](docs/configuration.md) | Settings, PIN, timeout, covered users, notifications |
+| [Architecture](docs/architecture.md) | Clean Architecture, patterns, dependency direction, project structure |
+| [Security & Privacy](docs/security.md) | Threat model, privacy policy, Windows APIs, anti-cheat compatibility |
+| [Platform Roadmap](docs/platform-roadmap.md) | FamilyGuard vision, DAD, MOM, future tools |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues, logs, service recovery |
+| [Development Notes](docs/development-notes.md) | Unexpected issues encountered during development |
+| [Contributing](CONTRIBUTING.md) | Dev setup, PR process, coding standards |
 
 ## Tech Stack
 
-- .NET 10 (LTS)
-- C# / WPF
+- .NET 10 (LTS) / C# / WPF
 - SQLite via Microsoft.Data.Sqlite
 - xUnit + NSubstitute + Shouldly
-- H.NotifyIcon.Wpf for the system tray
-- CommunityToolkit.Mvvm
-- WiX Toolset for MSI packaging
-- Podman + Red Hat UBI 9 for containerized builds
-- GitHub Actions for CI/CD
+- H.NotifyIcon.Wpf, CommunityToolkit.Mvvm
+- WiX Toolset v5 (MSI)
+- Podman + Red Hat UBI 9 (containerized builds)
+- GitHub Actions (CI/CD with Authenticode signing)
 
 ## License
 

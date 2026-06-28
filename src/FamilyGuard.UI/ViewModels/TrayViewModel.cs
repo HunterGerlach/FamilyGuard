@@ -11,7 +11,7 @@ public partial class TrayViewModel : ObservableObject
     private TrayIconState _iconState = TrayIconState.Disconnected;
 
     [ObservableProperty]
-    private string _toolTipText = "DaD — Connecting...";
+    private string _toolTipText = "DAD — Connecting...";
 
     [ObservableProperty]
     private PresenceState _presenceState = PresenceState.Unknown;
@@ -42,11 +42,11 @@ public partial class TrayViewModel : ObservableObject
         IconState = state;
         ToolTipText = state switch
         {
-            TrayIconState.Normal => "DaD — Monitoring active",
-            TrayIconState.Warning => "DaD — Mic open, user may be away",
-            TrayIconState.ActionTaken => "DaD — Mic was auto-muted",
-            TrayIconState.Disconnected => "DaD — Service disconnected",
-            _ => "DaD"
+            TrayIconState.Normal => "DAD — Monitoring active",
+            TrayIconState.Warning => "DAD — Mic open, user may be away",
+            TrayIconState.ActionTaken => "DAD — Mic was auto-muted",
+            TrayIconState.Disconnected => "DAD — Service disconnected",
+            _ => "DAD"
         };
     }
 

@@ -1,6 +1,6 @@
-# agents.md — Unexpected Issues Encountered
+# Development Notes
 
-This file records unexpected issues that required non-obvious solutions during development. It serves as a reference for future development sessions.
+Unexpected issues encountered during development with root causes, resolutions, and lessons learned. This file serves as a reference for future development sessions.
 
 ## 1. FluentAssertions v8+ Commercial License (2026-06-30)
 

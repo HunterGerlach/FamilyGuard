@@ -86,14 +86,14 @@ jobs:
 
       # --- Installer ---
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix --version 5.0.2
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add WixToolset.Heat.wixext/5.0.2
 
       - name: Harvest publish directories
         shell: pwsh
         run: |
           # Generate WiX fragments for all files in each publish directory
-          # -cg: ComponentGroup name, -dr: DirectoryRef, -ag: auto-generate GUIDs
-          # -sfrag: suppress fragment generation, -srd: suppress root directory
           wix heat dir publish/service -cg ServiceFiles -dr SERVICEDIR -ag -sfrag -srd -var var.ServicePublishDir -o installer/ServiceFiles.wxs
           wix heat dir publish/agent -cg AgentFiles -dr AGENTDIR -ag -sfrag -srd -var var.AgentPublishDir -o installer/AgentFiles.wxs
           wix heat dir publish/ui -cg UIFiles -dr UIDIR -ag -sfrag -srd -var var.UIPublishDir -o installer/UIFiles.wxs

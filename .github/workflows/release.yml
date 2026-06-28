@@ -31,14 +31,21 @@ jobs:
 
       # --- Self-contained publish to single flat directory ---
       # Publish all three to the same output dir — shared runtime DLLs are deduplicated
-      - name: Publish all components (self-contained, flat directory)
+      - name: Determine version
+        id: ver
+        shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
           $short = "${{ github.sha }}".Substring(0, 7)
-          $versionProps = "/p:Version=$version /p:InformationalVersion=$version+$short"
-          dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 --self-contained true -o publish/app $versionProps
-          dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 --self-contained true -o publish/app $versionProps
-          dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 --self-contained true -o publish/app $versionProps
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "info_version=$version+$short" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version: $version, Info: $version+$short"
+
+      - name: Publish all components (self-contained, flat directory)
+        run: |
+          dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 --self-contained true -o publish/app "/p:Version=${{ steps.ver.outputs.version }}" "/p:InformationalVersion=${{ steps.ver.outputs.info_version }}"
+          dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 --self-contained true -o publish/app "/p:Version=${{ steps.ver.outputs.version }}" "/p:InformationalVersion=${{ steps.ver.outputs.info_version }}"
+          dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 --self-contained true -o publish/app "/p:Version=${{ steps.ver.outputs.version }}" "/p:InformationalVersion=${{ steps.ver.outputs.info_version }}"
 
       - name: Clean PDB files and report
         shell: pwsh

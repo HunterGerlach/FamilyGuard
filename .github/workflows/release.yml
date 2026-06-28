@@ -179,11 +179,17 @@ jobs:
             publish/app/
 
       - name: Clean stale release assets
+        continue-on-error: true
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Remove any existing assets from this release tag before uploading
+          # Remove existing assets if the release already exists (re-tag scenario)
+          $releaseExists = gh release view "${{ github.ref_name }}" 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "No existing release for ${{ github.ref_name }} — nothing to clean"
+            exit 0
+          }
           $assets = gh release view "${{ github.ref_name }}" --json assets --jq '.assets[].name' 2>$null
           if ($assets) {
             foreach ($asset in $assets -split "`n") {

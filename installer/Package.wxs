@@ -10,20 +10,15 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of DAD is already installed."
                   AllowSameVersionUpgrades="yes" />
 
-    <!-- Embed cabinet files inside the MSI for single-file distribution -->
     <MediaTemplate EmbedCab="yes" />
 
     <!-- Launch conditions -->
     <Launch Condition="Privileged" Message="Administrator privileges are required to install DAD." />
     <Launch Condition="VersionNT64" Message="DAD requires a 64-bit version of Windows." />
 
-    <!-- Install directory structure -->
+    <!-- Install directory — flat, all executables and dependencies together -->
     <StandardDirectory Id="ProgramFiles6432Folder">
-      <Directory Id="INSTALLFOLDER" Name="FamilyGuard">
-        <Directory Id="SERVICEDIR" Name="service" />
-        <Directory Id="AGENTDIR" Name="agent" />
-        <Directory Id="UIDIR" Name="ui" />
-      </Directory>
+      <Directory Id="INSTALLFOLDER" Name="FamilyGuard" />
     </StandardDirectory>
 
     <!-- Data directory with proper ACLs -->
@@ -45,10 +40,10 @@
       </Directory>
     </StandardDirectory>
 
-    <!-- Service registration (references the exe from harvested ServiceFiles group) -->
-    <Component Id="ServiceRegistration" Directory="SERVICEDIR" Guid="11111111-1111-1111-1111-111111111111">
+    <!-- Service registration -->
+    <Component Id="ServiceRegistration" Directory="INSTALLFOLDER" Guid="11111111-1111-1111-1111-111111111111">
       <File Id="ServiceExeFile"
-            Source="$(var.ServicePublishDir)\FamilyGuard.Service.exe"
+            Source="$(var.PublishDir)\FamilyGuard.Service.exe"
             KeyPath="yes" />
 
       <ServiceInstall Id="FamilyGuardService"
@@ -58,8 +53,7 @@
                       Type="ownProcess"
                       Start="auto"
                       ErrorControl="normal"
-                      Account="LocalSystem">
-      </ServiceInstall>
+                      Account="LocalSystem" />
 
       <ServiceControl Id="StartFamilyGuardService"
                       Name="FamilyGuard"
@@ -73,9 +67,7 @@
     <Feature Id="Complete" Title="DAD" Level="1">
       <ComponentRef Id="DataDirectory" />
       <ComponentRef Id="ServiceRegistration" />
-      <ComponentGroupRef Id="ServiceFiles" />
-      <ComponentGroupRef Id="AgentFiles" />
-      <ComponentGroupRef Id="UIFiles" />
+      <ComponentGroupRef Id="AllFiles" />
     </Feature>
 
   </Package>

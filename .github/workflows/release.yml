@@ -29,25 +29,20 @@ jobs:
           dotnet test tests/FamilyGuard.Application.Tests/ -c Release
           dotnet test tests/FamilyGuard.Infrastructure.Tests/ -c Release
 
-      # --- Self-contained publish (no .NET runtime dependency) ---
-      - name: Publish Service (self-contained)
-        run: dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 --self-contained true -o publish/service
+      # --- Self-contained publish to single flat directory ---
+      # Publish all three to the same output dir — shared runtime DLLs are deduplicated
+      - name: Publish all components (self-contained, flat directory)
+        run: |
+          dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 --self-contained true -o publish/app
+          dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 --self-contained true -o publish/app
+          dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 --self-contained true -o publish/app
 
-      - name: Publish Agent (self-contained)
-        run: dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 --self-contained true -o publish/agent
-
-      - name: Publish UI (self-contained)
-        run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 --self-contained true -o publish/ui
-
-      # Remove PDB files to reduce MSI size
-      - name: Clean PDB files
+      - name: Clean PDB files and report
         shell: pwsh
         run: |
-          Get-ChildItem publish -Recurse -Filter "*.pdb" | Remove-Item -Force
-          $serviceCount = (Get-ChildItem publish/service -File).Count
-          $agentCount = (Get-ChildItem publish/agent -File).Count
-          $uiCount = (Get-ChildItem publish/ui -File).Count
-          Write-Host "Service: $serviceCount files, Agent: $agentCount files, UI: $uiCount files"
+          Get-ChildItem publish/app -Filter "*.pdb" | Remove-Item -Force
+          $count = (Get-ChildItem publish/app -File).Count
+          Write-Host "Total files in flat publish: $count"
 
       # --- Code Signing ---
       - name: Decode signing certificate
@@ -73,9 +68,9 @@ jobs:
           }
 
           $filesToSign = @(
-            "publish/service/FamilyGuard.Service.exe",
-            "publish/agent/FamilyGuard.Agent.exe",
-            "publish/ui/FamilyGuard.UI.exe"
+            "publish/app/FamilyGuard.Service.exe",
+            "publish/app/FamilyGuard.Agent.exe",
+            "publish/app/FamilyGuard.UI.exe"
           )
 
           foreach ($file in $filesToSign) {
@@ -91,38 +86,19 @@ jobs:
       - name: Generate installer files and build MSI
         shell: pwsh
         run: |
-          # Generate a single WiX source file listing ALL files from all publish directories
-          # This replaces the manual file listing approach and ensures every dependency is included
-
-          $serviceFiles = Get-ChildItem publish/service -File | Where-Object { $_.Name -ne 'FamilyGuard.Service.exe' }
-          $agentFiles = Get-ChildItem publish/agent -File
-          $uiFiles = Get-ChildItem publish/ui -File
+          # Generate WiX fragment listing ALL files from the flat publish directory
+          # (excluding Service.exe which is in the ServiceRegistration component)
+          $allFiles = Get-ChildItem publish/app -File | Where-Object { $_.Name -ne 'FamilyGuard.Service.exe' }
 
           $wxs = @"
           <?xml version="1.0" encoding="UTF-8"?>
           <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
             <Fragment>
-              <ComponentGroup Id="ServiceFiles" Directory="SERVICEDIR">
+              <ComponentGroup Id="AllFiles" Directory="INSTALLFOLDER">
           "@
-          foreach ($f in $serviceFiles) {
-            $id = "svc_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
-            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.ServicePublishDir)\$($f.Name)`" /></Component>`n"
-          }
-          $wxs += @"
-              </ComponentGroup>
-              <ComponentGroup Id="AgentFiles" Directory="AGENTDIR">
-          "@
-          foreach ($f in $agentFiles) {
-            $id = "agt_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
-            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.AgentPublishDir)\$($f.Name)`" /></Component>`n"
-          }
-          $wxs += @"
-              </ComponentGroup>
-              <ComponentGroup Id="UIFiles" Directory="UIDIR">
-          "@
-          foreach ($f in $uiFiles) {
-            $id = "ui_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
-            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.UIPublishDir)\$($f.Name)`" /></Component>`n"
+          foreach ($f in $allFiles) {
+            $id = "f_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
+            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.PublishDir)\$($f.Name)`" /></Component>`n"
           }
           $wxs += @"
               </ComponentGroup>
@@ -131,12 +107,10 @@ jobs:
           "@
 
           $wxs | Out-File -FilePath installer/HarvestedFiles.wxs -Encoding utf8
-          Write-Host "Generated HarvestedFiles.wxs with $($serviceFiles.Count) service + $($agentFiles.Count) agent + $($uiFiles.Count) UI files"
+          Write-Host "Generated HarvestedFiles.wxs with $($allFiles.Count) files"
 
           wix build installer/Package.wxs installer/HarvestedFiles.wxs `
-            -d ServicePublishDir=publish/service `
-            -d AgentPublishDir=publish/agent `
-            -d UIPublishDir=publish/ui `
+            -d PublishDir=publish/app `
             -o publish/FamilyGuard.msi
 
           if (Test-Path publish/FamilyGuard.msi) {
@@ -200,6 +174,7 @@ jobs:
           path: |
             publish/FamilyGuard-*.msi
             publish/update-manifest.json
+            publish/app/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

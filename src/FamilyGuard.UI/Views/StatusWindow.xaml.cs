@@ -1,7 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
-using FamilyGuard.Domain.Enums;
+using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Infrastructure.Persistence;
 using FamilyGuard.UI.ViewModels;
 
@@ -9,7 +9,7 @@ namespace FamilyGuard.UI.Views;
 
 public partial class StatusWindow : Window
 {
-    private readonly SqliteEventStore? _eventStore;
+    private readonly SqliteSettingsRepository? _settings;
     private readonly DispatcherTimer _refreshTimer;
 
     public StatusWindow()
@@ -22,10 +22,9 @@ public partial class StatusWindow : Window
 
         if (File.Exists(dbPath))
         {
-            _eventStore = new SqliteEventStore($"Data Source={dbPath};Mode=ReadOnly");
+            _settings = new SqliteSettingsRepository($"Data Source={dbPath};Mode=ReadOnly");
         }
 
-        // Refresh status every 2 seconds
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _refreshTimer.Tick += (_, _) => RefreshStatus();
         _refreshTimer.Start();
@@ -34,48 +33,28 @@ public partial class StatusWindow : Window
 
     private void RefreshStatus()
     {
-        if (DataContext is not StatusViewModel vm || _eventStore is null)
+        if (DataContext is not StatusViewModel vm || _settings is null)
             return;
 
         try
         {
-            // Get latest events to determine current state
-            var recentEvents = _eventStore.QueryRecent(10);
-
-            var lastMicEvent = recentEvents.FirstOrDefault(e =>
-                e.EventType is EventType.MicAutoMuted or EventType.MicManualMuted or EventType.MicManualUnmuted);
-
-            var lastPresenceEvent = recentEvents.FirstOrDefault(e =>
-                e.EventType == EventType.PresenceStateChanged);
-
-            var serviceRunning = recentEvents.Any(e =>
-                e.EventType == EventType.ServiceStarted || e.EventType == EventType.AgentStarted);
-
-            vm.MonitoringStatus = serviceRunning ? "Active" : "Unknown";
-
-            if (lastMicEvent is not null)
+            var state = _settings.LoadAgentState();
+            if (state is null)
             {
-                vm.MicState = lastMicEvent.EventType switch
-                {
-                    EventType.MicAutoMuted => "Muted (auto)",
-                    EventType.MicManualMuted => "Muted (manual)",
-                    EventType.MicManualUnmuted => "Unmuted",
-                    _ => "Unknown"
-                };
-                vm.LastPolicyAction = $"{lastMicEvent.EventType} at {lastMicEvent.TimestampUtc:HH:mm:ss}";
-
-                if (lastMicEvent.Details.TryGetValue("device_name", out var micName))
-                    vm.MicDeviceName = micName;
+                vm.MonitoringStatus = "Waiting for agent...";
+                return;
             }
 
-            if (lastPresenceEvent is not null && lastPresenceEvent.Details.TryGetValue("new_state", out var state))
-            {
-                vm.PresenceState = state;
-            }
+            vm.MonitoringStatus = "Active";
+            vm.PresenceState = state.PresenceState;
+            vm.MicState = state.MicMuted ? "Muted" : "Unmuted";
+            vm.MicDeviceName = state.MicDeviceName;
+            vm.InactiveSeconds = state.InactiveSeconds;
+            vm.LastPolicyAction = state.LastAction;
         }
         catch
         {
-            // Database may be locked by the service — silently retry next tick
+            // Database may be locked — silently retry next tick
         }
     }
 

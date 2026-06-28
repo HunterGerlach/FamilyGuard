@@ -6,6 +6,18 @@ public interface ISettingsRepository
     void Save(ProtectedSettings settings);
     void SetPin(string pin);
     bool VerifyPin(string pin);
+    void SaveAgentState(AgentState state);
+    AgentState? LoadAgentState();
+}
+
+public sealed class AgentState
+{
+    public string PresenceState { get; set; } = "Unknown";
+    public bool MicMuted { get; set; } = true;
+    public string MicDeviceName { get; set; } = "Unknown";
+    public double InactiveSeconds { get; set; }
+    public string LastAction { get; set; } = "None";
+    public string LastUpdatedUtc { get; set; } = string.Empty;
 }
 
 public sealed class ProtectedSettings

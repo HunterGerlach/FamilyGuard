@@ -162,6 +162,18 @@ public sealed class SqliteSettingsRepository : ISettingsRepository, IDisposable
         cmd.ExecuteNonQuery();
     }
 
+    public void SaveAgentState(AgentState state)
+    {
+        SetValue("agent_state", JsonSerializer.Serialize(state));
+    }
+
+    public AgentState? LoadAgentState()
+    {
+        var json = GetValue("agent_state");
+        if (json is null) return null;
+        return JsonSerializer.Deserialize<AgentState>(json);
+    }
+
     public void Dispose()
     {
         _connection.Dispose();

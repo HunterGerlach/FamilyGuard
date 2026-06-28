@@ -7,8 +7,7 @@
            UpgradeCode="E7A1B2C3-D4E5-F6A7-B8C9-D0E1F2A3B4C5"
            Scope="perMachine">
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of DAD is already installed."
-                  AllowSameVersionUpgrades="yes" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DAD is already installed." />
 
     <MediaTemplate EmbedCab="yes" />
 

@@ -21,6 +21,7 @@ public sealed class AgentWorker : BackgroundService
     private readonly IMicrophoneController _mic;
     private readonly IEventStore _eventStore;
     private readonly INotificationSender _notifier;
+    private readonly ISettingsRepository _settings;
     private readonly ISystemEventMonitor? _systemEvents;
     private readonly ILogger<AgentWorker> _logger;
 
@@ -46,6 +47,7 @@ public sealed class AgentWorker : BackgroundService
         IMicrophoneController mic,
         IEventStore eventStore,
         INotificationSender notifier,
+        ISettingsRepository settings,
         ILogger<AgentWorker> logger,
         ISystemEventMonitor? systemEvents = null)
     {
@@ -57,6 +59,7 @@ public sealed class AgentWorker : BackgroundService
         _mic = mic;
         _eventStore = eventStore;
         _notifier = notifier;
+        _settings = settings;
         _systemEvents = systemEvents;
         _logger = logger;
 
@@ -103,6 +106,7 @@ public sealed class AgentWorker : BackgroundService
             try
             {
                 RunCycle();
+                WriteAgentState();
                 StateUpdated?.Invoke();
             }
             catch (Exception ex)
@@ -154,10 +158,29 @@ public sealed class AgentWorker : BackgroundService
         }
     }
 
+    private void WriteAgentState()
+    {
+        try
+        {
+            _settings.SaveAgentState(new AgentState
+            {
+                PresenceState = _stateMachine.CurrentState.ToString(),
+                MicMuted = MicMuted,
+                MicDeviceName = MicDeviceName ?? "Unknown",
+                InactiveSeconds = InactiveSeconds,
+                LastAction = LastAction ?? "None",
+                LastUpdatedUtc = DateTimeOffset.UtcNow.ToString("O")
+            });
+        }
+        catch
+        {
+            // Don't let state write failures crash the agent loop
+        }
+    }
+
     public void ReloadRules()
     {
         _rules = _policyRepo.LoadAll();
         _logger.LogInformation("Reloaded {Count} policy rules", _rules.Count);
     }
-
 }

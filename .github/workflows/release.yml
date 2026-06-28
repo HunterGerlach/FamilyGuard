@@ -176,6 +176,22 @@ jobs:
             publish/update-manifest.json
             publish/app/
 
+      - name: Clean stale release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Remove any existing assets from this release tag before uploading
+          $assets = gh release view "${{ github.ref_name }}" --json assets --jq '.assets[].name' 2>$null
+          if ($assets) {
+            foreach ($asset in $assets -split "`n") {
+              if ($asset.Trim()) {
+                Write-Host "Removing stale asset: $asset"
+                gh release delete-asset "${{ github.ref_name }}" $asset.Trim() --yes 2>$null
+              }
+            }
+          }
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

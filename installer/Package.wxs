@@ -63,10 +63,37 @@
                       Wait="yes" />
     </Component>
 
+    <!-- Auto-start tray UI on user login -->
+    <Component Id="TrayAutoStart" Directory="INSTALLFOLDER" Guid="55555555-5555-5555-5555-555555555555">
+      <RegistryValue Root="HKLM"
+                     Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                     Name="FamilyGuard"
+                     Type="string"
+                     Value="&quot;[INSTALLFOLDER]FamilyGuard.UI.exe&quot;"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- Track installation in registry for upgrade detection -->
+    <Component Id="InstallMarker" Directory="INSTALLFOLDER" Guid="66666666-6666-6666-6666-666666666666">
+      <RegistryValue Root="HKLM"
+                     Key="Software\FamilyGuard"
+                     Name="Installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+      <RegistryValue Root="HKLM"
+                     Key="Software\FamilyGuard"
+                     Name="InstallDir"
+                     Type="string"
+                     Value="[INSTALLFOLDER]" />
+    </Component>
+
     <!-- Feature tree -->
     <Feature Id="Complete" Title="DAD" Level="1">
       <ComponentRef Id="DataDirectory" />
       <ComponentRef Id="ServiceRegistration" />
+      <ComponentRef Id="TrayAutoStart" />
+      <ComponentRef Id="InstallMarker" />
       <ComponentGroupRef Id="AllFiles" />
     </Feature>
 

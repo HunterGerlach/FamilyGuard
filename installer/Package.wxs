@@ -130,7 +130,7 @@
                   Impersonate="yes" />
 
     <InstallExecuteSequence>
-      <Custom Action="LaunchUI" After="InstallFinalize"><![CDATA[NOT REMOVE]]></Custom>
+      <Custom Action="LaunchUI" After="InstallFinalize" Condition="NOT REMOVE" />
     </InstallExecuteSequence>
 
   </Package>

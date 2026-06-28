@@ -120,18 +120,5 @@
       <ComponentGroupRef Id="AllFiles" />
     </Feature>
 
-    <!-- Launch tray UI immediately after install/upgrade.
-         Uses cmd /c start to run asynchronously in the user's session. -->
-    <CustomAction Id="LaunchUI"
-                  Directory="INSTALLFOLDER"
-                  ExeCommand='cmd.exe /c start "" "[INSTALLFOLDER]FamilyGuard.UI.exe"'
-                  Execute="commit"
-                  Return="asyncNoWait"
-                  Impersonate="yes" />
-
-    <InstallExecuteSequence>
-      <Custom Action="LaunchUI" After="InstallFinalize" Condition="NOT REMOVE" />
-    </InstallExecuteSequence>
-
   </Package>
 </Wix>

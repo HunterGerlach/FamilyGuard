@@ -68,7 +68,16 @@ public partial class SettingsWindow : Window
                 return;
             }
 
-            _settings.SetPin(pin);
+            try
+            {
+                _settings.SetPin(pin);
+            }
+            catch (Exception ex)
+            {
+                PinError.Text = $"Failed to save PIN: {ex.Message}";
+                PinError.Visibility = Visibility.Visible;
+                return;
+            }
             _pinConfigured = true;
             _unlocked = true;
             PinError.Visibility = Visibility.Collapsed;
@@ -110,12 +119,19 @@ public partial class SettingsWindow : Window
     {
         if (!_unlocked) return;
 
-        var settings = _settings.Load();
-        settings.PresenceTimeoutSeconds = (int)TimeoutSlider.Value;
-        _settings.Save(settings);
-
-        MessageBox.Show("Settings saved.", "DAD", MessageBoxButton.OK, MessageBoxImage.Information);
-        Close();
+        try
+        {
+            var settings = _settings.Load();
+            settings.PresenceTimeoutSeconds = (int)TimeoutSlider.Value;
+            _settings.Save(settings);
+            MessageBox.Show("Settings saved.", "DAD", MessageBoxButton.OK, MessageBoxImage.Information);
+            Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to save settings: {ex.Message}", "DAD",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void UpdateChannel_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

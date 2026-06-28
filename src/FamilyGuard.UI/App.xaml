@@ -58,8 +58,7 @@
             </Style>
 
             <tb:TaskbarIcon x:Key="TrayIcon"
-                            IconSource="{Binding IconSource}"
-                            ToolTipText="{Binding ToolTipText}"
+                            ToolTipText="DAD — Digital Activity Defender"
                             MenuActivation="LeftOrRightClick"
                             NoLeftClickDelay="True">
                 <tb:TaskbarIcon.ContextMenu>

@@ -184,8 +184,7 @@ public sealed class AgentWorker : BackgroundService
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = uiExePath,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    UseShellExecute = true
                 },
                 EnableRaisingEvents = true
             };

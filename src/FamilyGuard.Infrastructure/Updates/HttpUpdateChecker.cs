@@ -1,12 +1,14 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
 using FamilyGuard.Application.Ports.Output;
 using Microsoft.Extensions.Logging;
 
 namespace FamilyGuard.Infrastructure.Updates;
 
-public sealed class HttpUpdateChecker : IUpdateChecker
+public sealed partial class HttpUpdateChecker : IUpdateChecker
 {
+    private static readonly Regex Sha256Regex = Sha256HexRegex();
     private readonly HttpClient _http;
     private readonly string _manifestUrl;
     private readonly ILogger<HttpUpdateChecker> _logger;
@@ -22,6 +24,12 @@ public sealed class HttpUpdateChecker : IUpdateChecker
     {
         try
         {
+            if (!IsHttpsUrl(_manifestUrl))
+            {
+                _logger.LogWarning("Update manifest URL must use HTTPS");
+                return null;
+            }
+
             _logger.LogDebug("Checking for updates at {Url}", _manifestUrl);
 
             var response = await _http.GetAsync(_manifestUrl, ct);
@@ -43,6 +51,12 @@ public sealed class HttpUpdateChecker : IUpdateChecker
             {
                 _logger.LogDebug("Current version {Current} is up to date (latest: {Latest})",
                     currentVersion, manifest.Version);
+                return null;
+            }
+
+            if (!IsValidManifest(manifest))
+            {
+                _logger.LogWarning("Update manifest failed security validation");
                 return null;
             }
 
@@ -69,6 +83,22 @@ public sealed class HttpUpdateChecker : IUpdateChecker
         }
         return false;
     }
+
+    private static bool IsValidManifest(UpdateManifest manifest)
+    {
+        return !string.IsNullOrWhiteSpace(manifest.Version)
+            && Sha256Regex.IsMatch(manifest.Sha256)
+            && IsHttpsUrl(manifest.DownloadUrl);
+    }
+
+    private static bool IsHttpsUrl(string url)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps;
+    }
+
+    [GeneratedRegex("^[a-fA-F0-9]{64}$", RegexOptions.CultureInvariant)]
+    private static partial Regex Sha256HexRegex();
 
     private sealed class UpdateManifest
     {

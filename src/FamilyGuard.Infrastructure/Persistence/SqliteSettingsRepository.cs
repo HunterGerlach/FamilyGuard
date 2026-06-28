@@ -8,6 +8,11 @@ namespace FamilyGuard.Infrastructure.Persistence;
 
 public sealed class SqliteSettingsRepository : ISettingsRepository, IDisposable
 {
+    private const string PinHashPrefix = "pbkdf2-sha256";
+    private const int PinHashIterations = 210_000;
+    private const int PinSaltSizeBytes = 16;
+    private const int PinHashSizeBytes = 32;
+
     private readonly SqliteConnection _connection;
 
     public SqliteSettingsRepository(string connectionString)
@@ -32,11 +37,12 @@ public sealed class SqliteSettingsRepository : ISettingsRepository, IDisposable
     public ProtectedSettings Load()
     {
         var json = GetValue("protected_settings");
-        if (json is null)
-            return new ProtectedSettings();
+        var settings = json is null
+            ? new ProtectedSettings()
+            : JsonSerializer.Deserialize<ProtectedSettings>(json) ?? new ProtectedSettings();
 
-        return JsonSerializer.Deserialize<ProtectedSettings>(json)
-            ?? new ProtectedSettings();
+        settings.PinHash = GetValue("pin_hash") ?? settings.PinHash;
+        return settings;
     }
 
     public void Save(ProtectedSettings settings)
@@ -47,6 +53,9 @@ public sealed class SqliteSettingsRepository : ISettingsRepository, IDisposable
 
     public void SetPin(string pin)
     {
+        if (string.IsNullOrWhiteSpace(pin))
+            throw new ArgumentException("PIN cannot be empty.", nameof(pin));
+
         var hash = HashPin(pin);
         SetValue("pin_hash", hash);
     }
@@ -54,19 +63,83 @@ public sealed class SqliteSettingsRepository : ISettingsRepository, IDisposable
     public bool VerifyPin(string pin)
     {
         var storedHash = GetValue("pin_hash");
-        if (storedHash is null)
+        if (string.IsNullOrWhiteSpace(storedHash))
             return false;
 
-        var inputHash = HashPin(pin);
-        return CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(storedHash),
-            Encoding.UTF8.GetBytes(inputHash));
+        if (VerifyPbkdf2Hash(pin, storedHash))
+            return true;
+
+        if (!IsLegacySha256Hash(storedHash) || !VerifyLegacySha256Hash(pin, storedHash))
+            return false;
+
+        SetValue("pin_hash", HashPin(pin));
+        return true;
     }
 
     private static string HashPin(string pin)
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(pin));
-        return Convert.ToBase64String(bytes);
+        var salt = RandomNumberGenerator.GetBytes(PinSaltSizeBytes);
+        var hash = Rfc2898DeriveBytes.Pbkdf2(
+            pin,
+            salt,
+            PinHashIterations,
+            HashAlgorithmName.SHA256,
+            PinHashSizeBytes);
+
+        return string.Join('$',
+            PinHashPrefix,
+            PinHashIterations.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Convert.ToBase64String(salt),
+            Convert.ToBase64String(hash));
+    }
+
+    private static bool VerifyPbkdf2Hash(string pin, string storedHash)
+    {
+        var parts = storedHash.Split('$');
+        if (parts.Length != 4 || parts[0] != PinHashPrefix)
+            return false;
+
+        if (!int.TryParse(parts[1], System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out var iterations) || iterations <= 0)
+            return false;
+
+        try
+        {
+            var salt = Convert.FromBase64String(parts[2]);
+            var expected = Convert.FromBase64String(parts[3]);
+            var actual = Rfc2898DeriveBytes.Pbkdf2(
+                pin,
+                salt,
+                iterations,
+                HashAlgorithmName.SHA256,
+                expected.Length);
+
+            return CryptographicOperations.FixedTimeEquals(actual, expected);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsLegacySha256Hash(string storedHash)
+    {
+        try
+        {
+            return Convert.FromBase64String(storedHash).Length == PinHashSizeBytes;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool VerifyLegacySha256Hash(string pin, string storedHash)
+    {
+        var inputHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(pin)));
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(storedHash),
+            Encoding.UTF8.GetBytes(inputHash));
     }
 
     private string? GetValue(string key)

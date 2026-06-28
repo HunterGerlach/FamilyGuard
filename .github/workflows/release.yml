@@ -86,30 +86,63 @@ jobs:
 
       # --- Installer ---
       - name: Install WiX Toolset
-        run: |
-          dotnet tool install --global wix --version 5.0.2
-          wix extension add WixToolset.Heat.wixext/5.0.2
+        run: dotnet tool install --global wix --version 5.0.2
 
-      - name: Harvest publish directories
+      - name: Generate installer files and build MSI
         shell: pwsh
         run: |
-          # Generate WiX fragments for all files in each publish directory
-          wix heat dir publish/service -cg ServiceFiles -dr SERVICEDIR -ag -sfrag -srd -var var.ServicePublishDir -o installer/ServiceFiles.wxs
-          wix heat dir publish/agent -cg AgentFiles -dr AGENTDIR -ag -sfrag -srd -var var.AgentPublishDir -o installer/AgentFiles.wxs
-          wix heat dir publish/ui -cg UIFiles -dr UIDIR -ag -sfrag -srd -var var.UIPublishDir -o installer/UIFiles.wxs
+          # Generate a single WiX source file listing ALL files from all publish directories
+          # This replaces the manual file listing approach and ensures every dependency is included
 
-          # Remove the duplicate Service.exe from harvested files (it's in ServiceRegistration component)
-          $serviceWxs = Get-Content installer/ServiceFiles.wxs -Raw
-          $serviceWxs = $serviceWxs -replace '(?s)<Component[^>]*>[\s\S]*?FamilyGuard\.Service\.exe[\s\S]*?</Component>', ''
-          $serviceWxs | Set-Content installer/ServiceFiles.wxs
+          $serviceFiles = Get-ChildItem publish/service -File | Where-Object { $_.Name -ne 'FamilyGuard.Service.exe' }
+          $agentFiles = Get-ChildItem publish/agent -File
+          $uiFiles = Get-ChildItem publish/ui -File
 
-      - name: Build MSI
-        run: |
-          wix build installer/Package.wxs installer/ServiceFiles.wxs installer/AgentFiles.wxs installer/UIFiles.wxs `
+          $wxs = @"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+            <Fragment>
+              <ComponentGroup Id="ServiceFiles" Directory="SERVICEDIR">
+          "@
+          foreach ($f in $serviceFiles) {
+            $id = "svc_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
+            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.ServicePublishDir)\$($f.Name)`" /></Component>`n"
+          }
+          $wxs += @"
+              </ComponentGroup>
+              <ComponentGroup Id="AgentFiles" Directory="AGENTDIR">
+          "@
+          foreach ($f in $agentFiles) {
+            $id = "agt_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
+            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.AgentPublishDir)\$($f.Name)`" /></Component>`n"
+          }
+          $wxs += @"
+              </ComponentGroup>
+              <ComponentGroup Id="UIFiles" Directory="UIDIR">
+          "@
+          foreach ($f in $uiFiles) {
+            $id = "ui_" + ($f.Name -replace '[^a-zA-Z0-9]', '_')
+            $wxs += "      <Component Id=`"$id`" Guid=`"*`"><File Source=`"`$(var.UIPublishDir)\$($f.Name)`" /></Component>`n"
+          }
+          $wxs += @"
+              </ComponentGroup>
+            </Fragment>
+          </Wix>
+          "@
+
+          $wxs | Out-File -FilePath installer/HarvestedFiles.wxs -Encoding utf8
+          Write-Host "Generated HarvestedFiles.wxs with $($serviceFiles.Count) service + $($agentFiles.Count) agent + $($uiFiles.Count) UI files"
+
+          wix build installer/Package.wxs installer/HarvestedFiles.wxs `
             -d ServicePublishDir=publish/service `
             -d AgentPublishDir=publish/agent `
             -d UIPublishDir=publish/ui `
             -o publish/FamilyGuard.msi
+
+          if (Test-Path publish/FamilyGuard.msi) {
+            $size = (Get-Item publish/FamilyGuard.msi).Length / 1MB
+            Write-Host "MSI built successfully: $([math]::Round($size, 1)) MB"
+          }
         continue-on-error: true
 
       - name: Sign MSI

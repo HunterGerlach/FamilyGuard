@@ -97,6 +97,7 @@ All tools share: FamilyGuard.Service, FamilyGuard.Infrastructure, policy engine,
 | [Platform Roadmap](docs/platform-roadmap.md) | FamilyGuard vision, DAD, MOM, future tools |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues, logs, service recovery |
 | [Development Notes](docs/development-notes.md) | Unexpected issues encountered during development |
+| [Code Signing Policy](docs/code-signing-policy.md) | Signing process, team roles, security controls |
 | [Contributing](CONTRIBUTING.md) | Dev setup, PR process, coding standards |
 
 ## Tech Stack
@@ -108,6 +109,10 @@ All tools share: FamilyGuard.Service, FamilyGuard.Infrastructure, policy engine,
 - WiX Toolset v5 (MSI)
 - Podman + Red Hat UBI 9 (containerized builds)
 - GitHub Actions (CI/CD with Authenticode signing)
+
+## Code Signing
+
+Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org). See [Code Signing Policy](docs/code-signing-policy.md).
 
 ## License
 

@@ -140,23 +140,29 @@ jobs:
             -o publish/FamilyGuard.msi
 
           if (Test-Path publish/FamilyGuard.msi) {
-            $size = (Get-Item publish/FamilyGuard.msi).Length / 1MB
-            Write-Host "MSI built successfully: $([math]::Round($size, 1)) MB"
+            $version = "${{ github.ref_name }}".TrimStart('v')
+            $versionedName = "FamilyGuard-$version.msi"
+            Move-Item publish/FamilyGuard.msi "publish/$versionedName"
+            $size = (Get-Item "publish/$versionedName").Length / 1MB
+            Write-Host "MSI built successfully: $versionedName ($([math]::Round($size, 1)) MB)"
           }
         continue-on-error: true
 
       - name: Sign MSI
-        if: hashFiles('publish/FamilyGuard.msi') != ''
         shell: pwsh
         env:
           CODE_SIGNING_PASSWORD: ${{ secrets.CODE_SIGNING_PASSWORD }}
         run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $msiPath = "publish/FamilyGuard-$version.msi"
+          if (-not (Test-Path $msiPath)) { Write-Host "No MSI to sign"; exit 0 }
+
           $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" |
             Where-Object { $_.FullName -like "*x64*" } |
             Select-Object -First 1 -ExpandProperty FullName
 
-          if ($signtool -and (Test-Path "publish/FamilyGuard.msi")) {
-            & $signtool sign /f "${{ runner.temp }}\codesign.pfx" /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "publish/FamilyGuard.msi"
+          if ($signtool) {
+            & $signtool sign /f "${{ runner.temp }}\codesign.pfx" /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $msiPath
           }
 
       # --- Cleanup cert ---
@@ -172,12 +178,13 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          $msiPath = "publish/FamilyGuard.msi"
+          $msiName = "FamilyGuard-$version.msi"
+          $msiPath = "publish/$msiName"
           $hash = if (Test-Path $msiPath) { (Get-FileHash $msiPath -Algorithm SHA256).Hash } else { "N/A" }
           $manifest = @{
             version = $version
             sha256 = $hash
-            download_url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/FamilyGuard.msi"
+            download_url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$msiName"
             released_at = (Get-Date -Format "o")
           } | ConvertTo-Json
           $manifest | Out-File -FilePath publish/update-manifest.json -Encoding utf8
@@ -188,16 +195,13 @@ jobs:
         with:
           name: familyguard-${{ github.ref_name }}
           path: |
-            publish/FamilyGuard.msi
+            publish/FamilyGuard-*.msi
             publish/update-manifest.json
-            publish/service/
-            publish/agent/
-            publish/ui/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
-            publish/FamilyGuard.msi
+            publish/FamilyGuard-*.msi
             publish/update-manifest.json

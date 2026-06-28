@@ -59,14 +59,14 @@
                       Start="auto"
                       ErrorControl="normal"
                       Account="LocalSystem">
-        <ServiceConfig DelayedAutoStart="no"
-                       FailureActionsWhen="failedToStop"
-                       ResetPeriodInDays="1"
-                       RestartServiceDelayInSeconds="60"
-                       SecondFailureActionType="restart"
-                       ThirdFailureActionType="restart"
-                       FirstFailureActionType="restart" />
       </ServiceInstall>
+
+      <!-- Service recovery: restart on failure (60s, 120s, 300s) -->
+      <ServiceConfig ServiceName="FamilyGuard" OnInstall="yes" OnReinstall="yes">
+        <FailureAction Type="restart" Delay="60" />
+        <FailureAction Type="restart" Delay="120" />
+        <FailureAction Type="restart" Delay="300" />
+      </ServiceConfig>
 
       <ServiceControl Id="StartFamilyGuardService"
                       Name="FamilyGuard"

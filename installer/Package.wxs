@@ -119,5 +119,24 @@
       <ComponentGroupRef Id="AllFiles" />
     </Feature>
 
+    <!-- Kill orphan agent and UI processes before install/upgrade to release file locks -->
+    <CustomAction Id="KillAgents"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand='cmd.exe /c taskkill /F /IM FamilyGuard.Agent.exe /T 2>nul'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+    <CustomAction Id="KillUI"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand='cmd.exe /c taskkill /F /IM FamilyGuard.UI.exe /T 2>nul'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="KillAgents" Before="StopServices" />
+      <Custom Action="KillUI" Before="StopServices" />
+    </InstallExecuteSequence>
+
   </Package>
 </Wix>

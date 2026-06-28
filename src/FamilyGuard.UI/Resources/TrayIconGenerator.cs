@@ -14,7 +14,7 @@ namespace FamilyGuard.UI.Resources;
 public static class TrayIconGenerator
 {
     private static readonly string IconDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "FamilyGuard", "icons");
 
     private static readonly Dictionary<TrayIconState, BitmapImage> Cache = new();

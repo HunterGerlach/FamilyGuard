@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using FamilyGuard.Application.Policies;
 using FamilyGuard.Application.Ports.Input;
 using FamilyGuard.Application.Ports.Output;
@@ -28,9 +27,6 @@ public sealed class AgentWorker : BackgroundService
     private readonly string _windowsUser;
     private readonly SessionId _sessionId;
     private IReadOnlyList<PolicyRule> _rules = [];
-    private Process? _uiProcess;
-    private DateTimeOffset _lastUiLaunchAttempt = DateTimeOffset.MinValue;
-    private static readonly TimeSpan UiRestartCooldown = TimeSpan.FromSeconds(30);
 
     // Exposed for UI binding
     public PresenceState CurrentPresence => _stateMachine.CurrentState;
@@ -99,15 +95,14 @@ public sealed class AgentWorker : BackgroundService
         _rules = _policyRepo.LoadAll();
         _logger.LogInformation("Loaded {Count} policy rules", _rules.Count);
 
-        // Launch tray UI process
-        LaunchUiProcess();
+        // Note: UI is launched independently via Registry Run key / Start Menu.
+        // The agent runs in Session 0 (services) and cannot show UI.
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 RunCycle();
-                EnsureUiRunning();
                 StateUpdated?.Invoke();
             }
             catch (Exception ex)
@@ -117,8 +112,6 @@ public sealed class AgentWorker : BackgroundService
 
             await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
-
-        StopUiProcess();
 
         _eventStore.Append(StructuredEvent.Create(
             EventType.AgentStopped, _windowsUser, _sessionId));
@@ -167,67 +160,4 @@ public sealed class AgentWorker : BackgroundService
         _logger.LogInformation("Reloaded {Count} policy rules", _rules.Count);
     }
 
-    private void LaunchUiProcess()
-    {
-        _lastUiLaunchAttempt = DateTimeOffset.UtcNow;
-        var uiExePath = Path.Combine(AppContext.BaseDirectory, "FamilyGuard.UI.exe");
-        if (!File.Exists(uiExePath))
-        {
-            _logger.LogWarning("UI executable not found at {Path} — tray icon unavailable", uiExePath);
-            return;
-        }
-
-        try
-        {
-            _uiProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = uiExePath,
-                    UseShellExecute = true
-                },
-                EnableRaisingEvents = true
-            };
-            _uiProcess.Start();
-            _logger.LogInformation("Launched UI process (PID {Pid})", _uiProcess.Id);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to launch UI process");
-        }
-    }
-
-    private void EnsureUiRunning()
-    {
-        if (_uiProcess is not null && !_uiProcess.HasExited)
-            return;
-
-        if (DateTimeOffset.UtcNow - _lastUiLaunchAttempt < UiRestartCooldown)
-            return;
-
-        _logger.LogInformation("UI process not running — restarting");
-        LaunchUiProcess();
-    }
-
-    private void StopUiProcess()
-    {
-        if (_uiProcess is null || _uiProcess.HasExited)
-            return;
-
-        try
-        {
-            _uiProcess.Kill(entireProcessTree: true);
-            _uiProcess.WaitForExit(3000);
-            _logger.LogInformation("Stopped UI process");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error stopping UI process");
-        }
-        finally
-        {
-            _uiProcess?.Dispose();
-            _uiProcess = null;
-        }
-    }
 }

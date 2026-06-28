@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using FamilyGuard.UI.ViewModels;
 using FamilyGuard.UI.Views;
 using H.NotifyIcon;
@@ -10,7 +11,7 @@ public partial class App : System.Windows.Application
 {
     private const string SingleInstanceMutexName = @"Local\FamilyGuard.UI";
     private static readonly string LogPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "FamilyGuard", "ui.log");
 
     private Mutex? _singleInstanceMutex;
@@ -34,15 +35,19 @@ public partial class App : System.Windows.Application
 
             base.OnStartup(e);
 
+            // Pre-generate icon files before creating the tray icon
+            Log("Generating icon files");
+            _trayViewModel = new TrayViewModel();
+            _trayViewModel.UpdateState(TrayIconState.Normal);
+            var iconSource = _trayViewModel.IconSource;
+            Log($"Icon generated: {iconSource?.GetType().Name ?? "null"}, URI: {(iconSource as BitmapImage)?.UriSource}");
+
+            // Create the tray icon with the pre-generated icon
             Log("Creating tray icon");
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
-            _trayViewModel = new TrayViewModel();
-            _trayIcon.DataContext = _trayViewModel;
-
-            // Set icon and state — must happen after DataContext is assigned
-            _trayViewModel.UpdateState(TrayIconState.Normal);
-            _trayIcon.IconSource = _trayViewModel.IconSource;
+            _trayIcon.IconSource = iconSource;
             _trayIcon.ToolTipText = _trayViewModel.ToolTipText;
+            _trayIcon.DataContext = _trayViewModel;
 
             // Subscribe to state changes to update the icon
             _trayViewModel.PropertyChanged += (_, args) =>
@@ -54,8 +59,7 @@ public partial class App : System.Windows.Application
             };
 
             _trayIcon.ForceCreate();
-
-            Log($"Tray icon created. IconSource type: {_trayViewModel.IconSource?.GetType().Name ?? "null"}");
+            Log("Tray icon created successfully");
         }
         catch (Exception ex)
         {

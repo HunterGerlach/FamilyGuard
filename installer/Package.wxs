@@ -10,6 +10,9 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of DAD is already installed."
                   AllowSameVersionUpgrades="yes" />
 
+    <!-- Embed cabinet files inside the MSI for single-file distribution -->
+    <MediaTemplate EmbedCab="yes" />
+
     <!-- Install directory -->
     <StandardDirectory Id="ProgramFiles6432Folder">
       <Directory Id="INSTALLFOLDER" Name="FamilyGuard">

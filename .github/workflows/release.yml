@@ -29,14 +29,25 @@ jobs:
           dotnet test tests/FamilyGuard.Application.Tests/ -c Release
           dotnet test tests/FamilyGuard.Infrastructure.Tests/ -c Release
 
-      - name: Publish Service
-        run: dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 -o publish/service --self-contained false
+      # --- Self-contained publish (no .NET runtime dependency) ---
+      - name: Publish Service (self-contained)
+        run: dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 --self-contained true -o publish/service
 
-      - name: Publish Agent
-        run: dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 -o publish/agent --self-contained false
+      - name: Publish Agent (self-contained)
+        run: dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 --self-contained true -o publish/agent
 
-      - name: Publish UI
-        run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 -o publish/ui --self-contained false
+      - name: Publish UI (self-contained)
+        run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 --self-contained true -o publish/ui
+
+      # Remove PDB files to reduce MSI size
+      - name: Clean PDB files
+        shell: pwsh
+        run: |
+          Get-ChildItem publish -Recurse -Filter "*.pdb" | Remove-Item -Force
+          $serviceCount = (Get-ChildItem publish/service -File).Count
+          $agentCount = (Get-ChildItem publish/agent -File).Count
+          $uiCount = (Get-ChildItem publish/ui -File).Count
+          Write-Host "Service: $serviceCount files, Agent: $agentCount files, UI: $uiCount files"
 
       # --- Code Signing ---
       - name: Decode signing certificate
@@ -46,7 +57,6 @@ jobs:
         run: |
           $certBytes = [Convert]::FromBase64String($env:CODE_SIGNING_CERT)
           [IO.File]::WriteAllBytes("${{ runner.temp }}\codesign.pfx", $certBytes)
-          Write-Host "Certificate decoded to ${{ runner.temp }}\codesign.pfx"
 
       - name: Sign executables
         shell: pwsh
@@ -62,8 +72,6 @@ jobs:
             exit 0
           }
 
-          Write-Host "Using signtool: $signtool"
-
           $filesToSign = @(
             "publish/service/FamilyGuard.Service.exe",
             "publish/agent/FamilyGuard.Agent.exe",
@@ -72,25 +80,32 @@ jobs:
 
           foreach ($file in $filesToSign) {
             if (Test-Path $file) {
-              Write-Host "Signing $file..."
               & $signtool sign /f "${{ runner.temp }}\codesign.pfx" /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $file
-              if ($LASTEXITCODE -ne 0) {
-                Write-Warning "Failed to sign $file (exit code $LASTEXITCODE)"
-              } else {
-                Write-Host "Signed $file successfully"
-              }
             }
           }
 
       # --- Installer ---
       - name: Install WiX Toolset
+        run: dotnet tool install --global wix --version 5.0.2
+
+      - name: Harvest publish directories
+        shell: pwsh
         run: |
-          dotnet tool install --global wix --version 5.0.2
-          wix extension add WixToolset.UI.wixext/5.0.2
+          # Generate WiX fragments for all files in each publish directory
+          # -cg: ComponentGroup name, -dr: DirectoryRef, -ag: auto-generate GUIDs
+          # -sfrag: suppress fragment generation, -srd: suppress root directory
+          wix heat dir publish/service -cg ServiceFiles -dr SERVICEDIR -ag -sfrag -srd -var var.ServicePublishDir -o installer/ServiceFiles.wxs
+          wix heat dir publish/agent -cg AgentFiles -dr AGENTDIR -ag -sfrag -srd -var var.AgentPublishDir -o installer/AgentFiles.wxs
+          wix heat dir publish/ui -cg UIFiles -dr UIDIR -ag -sfrag -srd -var var.UIPublishDir -o installer/UIFiles.wxs
+
+          # Remove the duplicate Service.exe from harvested files (it's in ServiceRegistration component)
+          $serviceWxs = Get-Content installer/ServiceFiles.wxs -Raw
+          $serviceWxs = $serviceWxs -replace '(?s)<Component[^>]*>[\s\S]*?FamilyGuard\.Service\.exe[\s\S]*?</Component>', ''
+          $serviceWxs | Set-Content installer/ServiceFiles.wxs
 
       - name: Build MSI
         run: |
-          wix build installer/Package.wxs `
+          wix build installer/Package.wxs installer/ServiceFiles.wxs installer/AgentFiles.wxs installer/UIFiles.wxs `
             -d ServicePublishDir=publish/service `
             -d AgentPublishDir=publish/agent `
             -d UIPublishDir=publish/ui `
@@ -108,7 +123,6 @@ jobs:
             Select-Object -First 1 -ExpandProperty FullName
 
           if ($signtool -and (Test-Path "publish/FamilyGuard.msi")) {
-            Write-Host "Signing MSI..."
             & $signtool sign /f "${{ runner.temp }}\codesign.pfx" /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "publish/FamilyGuard.msi"
           }
 
@@ -140,7 +154,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: familyguard-${{ github.ref_name }}
-          path: publish/
+          path: |
+            publish/FamilyGuard.msi
+            publish/update-manifest.json
+            publish/service/
+            publish/agent/
+            publish/ui/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

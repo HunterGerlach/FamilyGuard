@@ -47,6 +47,6 @@ RUN dotnet test tests/FamilyGuard.Domain.Tests/ --no-build --logger "console;ver
     dotnet test tests/FamilyGuard.Application.Tests/ --no-build --logger "console;verbosity=detailed" && \
     dotnet test tests/FamilyGuard.Infrastructure.Tests/ --no-build --logger "console;verbosity=detailed"
 
-# Cross-compile Service + Agent for Windows
-RUN dotnet publish src/FamilyGuard.Service/ -c Release -r win-x64 --self-contained false -o /publish/service && \
-    dotnet publish src/FamilyGuard.Agent/ -c Release -r win-x64 --self-contained false -o /publish/agent
+# Cross-compile Service + Agent for Windows (self-contained — no .NET runtime dependency)
+RUN dotnet publish src/FamilyGuard.Service/ -c Release -r win-x64 --self-contained true -o /publish/service && \
+    dotnet publish src/FamilyGuard.Agent/ -c Release -r win-x64 --self-contained true -o /publish/agent

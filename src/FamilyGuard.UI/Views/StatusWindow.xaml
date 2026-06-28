@@ -2,67 +2,70 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:FamilyGuard.UI.ViewModels"
-        Title="DaD — Status" Height="350" Width="400"
-        WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        Title="DaD — Status" Height="430" Width="520"
+        MinHeight="430" MinWidth="520"
+        WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <vm:StatusViewModel />
     </Window.DataContext>
-    <Grid Margin="16">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="16" />
+            <RowDefinition Height="8" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="16" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <TextBlock Grid.Row="0" Text="DaD Status" FontSize="20" FontWeight="SemiBold" />
+        <TextBlock Grid.Row="0" Text="DaD Status" Style="{StaticResource PageTitle}" />
+        <TextBlock Grid.Row="2" Style="{StaticResource HelpText}"
+                   Text="A transparent snapshot of what DaD is monitoring right now. DaD never records audio, reads messages, captures screenshots, or logs keystrokes." />
 
-        <!-- Status Grid -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="140" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="28" />
-                <RowDefinition Height="28" />
-                <RowDefinition Height="28" />
-                <RowDefinition Height="28" />
-                <RowDefinition Height="28" />
-                <RowDefinition Height="28" />
-                <RowDefinition Height="28" />
-            </Grid.RowDefinitions>
+        <Border Grid.Row="4" Style="{StaticResource Card}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="34" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Monitoring:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MonitoringStatus}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Monitoring" VerticalAlignment="Center" Foreground="{StaticResource DadMutedInkBrush}" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MonitoringStatus}" VerticalAlignment="Center" FontWeight="SemiBold" />
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Current User:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentUser}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Current user" VerticalAlignment="Center" Foreground="{StaticResource DadMutedInkBrush}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentUser}" VerticalAlignment="Center" />
 
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="Microphone:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MicDeviceName}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Microphone" VerticalAlignment="Center" Foreground="{StaticResource DadMutedInkBrush}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MicDeviceName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="Mic State:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding MicState}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Mic state" VerticalAlignment="Center" Foreground="{StaticResource DadMutedInkBrush}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding MicState}" VerticalAlignment="Center" FontWeight="SemiBold" />
 
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="Presence:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PresenceState}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Presence" VerticalAlignment="Center" Foreground="{StaticResource DadMutedInkBrush}" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PresenceState}" VerticalAlignment="Center" />
 
-            <TextBlock Grid.Row="5" Grid.Column="0" Text="Inactive:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding InactiveSeconds, StringFormat={}{0:F0}s}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Inactive time" VerticalAlignment="Center" Foreground="{StaticResource DadMutedInkBrush}" />
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding InactiveSeconds, StringFormat={}{0:F0} seconds}" VerticalAlignment="Center" />
 
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="Last Action:" VerticalAlignment="Center" />
-            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding LastPolicyAction}" VerticalAlignment="Center" TextWrapping="Wrap" />
-        </Grid>
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Last action" VerticalAlignment="Top" Foreground="{StaticResource DadMutedInkBrush}" Margin="0,7,0,0" />
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding LastPolicyAction}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </Grid>
+        </Border>
 
-        <!-- Buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Mute Now" Padding="12,6" Margin="0,0,8,0" />
-            <Button Content="Unmute" Padding="12,6" Margin="0,0,8,0" />
-            <Button Content="Close" Padding="12,6" Click="Close_Click" />
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Mute Now" Margin="0,0,8,0" ToolTip="Manual microphone control will be available when the agent connection is wired." />
+            <Button Content="Unmute" Margin="0,0,8,0" ToolTip="DaD never auto-unmutes; a user must choose to unmute." />
+            <Button Content="Close" IsCancel="True" Click="Close_Click" />
         </StackPanel>
     </Grid>
 </Window>

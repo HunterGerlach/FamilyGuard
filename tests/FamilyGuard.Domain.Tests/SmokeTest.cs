@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Domain.Enums;
 
@@ -9,6 +9,6 @@ public class SmokeTest
     [Fact]
     public void PresenceState_HasExpectedValues()
     {
-        Enum.GetValues<PresenceState>().Should().HaveCount(4);
+        Enum.GetValues<PresenceState>().Length.ShouldBe(4);
     }
 }

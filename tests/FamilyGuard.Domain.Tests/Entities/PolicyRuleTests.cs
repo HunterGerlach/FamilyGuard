@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Domain.Entities;
 using FamilyGuard.Domain.Enums;
@@ -15,9 +15,9 @@ public class PolicyRuleTests
             name: "Mute unattended microphone",
             enabled: true);
 
-        rule.Id.Should().Be("mute_unattended_microphone");
-        rule.Name.Should().Be("Mute unattended microphone");
-        rule.Enabled.Should().BeTrue();
+        rule.Id.ShouldBe("mute_unattended_microphone");
+        rule.Name.ShouldBe("Mute unattended microphone");
+        rule.Enabled.ShouldBeTrue();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class PolicyRuleTests
             name: "Mute unattended microphone",
             enabled: false);
 
-        rule.Enabled.Should().BeFalse();
+        rule.Enabled.ShouldBeFalse();
     }
 
     [Fact]
@@ -40,9 +40,9 @@ public class PolicyRuleTests
             enabled: true,
             conditions: [PolicyCondition.MicUnmuted, PolicyCondition.PresenceAway]);
 
-        rule.Conditions.Should().HaveCount(2);
-        rule.Conditions.Should().Contain(PolicyCondition.MicUnmuted);
-        rule.Conditions.Should().Contain(PolicyCondition.PresenceAway);
+        rule.Conditions.Count.ShouldBe(2);
+        rule.Conditions.ShouldContain(PolicyCondition.MicUnmuted);
+        rule.Conditions.ShouldContain(PolicyCondition.PresenceAway);
     }
 
     [Fact]
@@ -55,8 +55,8 @@ public class PolicyRuleTests
             conditions: [PolicyCondition.MicUnmuted, PolicyCondition.PresenceAway],
             actions: [new PolicyAction(PolicyActionType.MuteMicrophone)]);
 
-        rule.Actions.Should().HaveCount(1);
-        rule.Actions[0].ActionType.Should().Be(PolicyActionType.MuteMicrophone);
+        rule.Actions.Count.ShouldBe(1);
+        rule.Actions[0].ActionType.ShouldBe(PolicyActionType.MuteMicrophone);
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public class PolicyRuleTests
             enabled: true,
             appliesToUsers: ["child1", "child2"]);
 
-        rule.AppliesToUser("child1").Should().BeTrue();
-        rule.AppliesToUser("parent").Should().BeFalse();
+        rule.AppliesToUser("child1").ShouldBeTrue();
+        rule.AppliesToUser("parent").ShouldBeFalse();
     }
 
     [Fact]
@@ -80,6 +80,6 @@ public class PolicyRuleTests
             name: "Mute unattended microphone",
             enabled: true);
 
-        rule.AppliesToUser("anyone").Should().BeTrue();
+        rule.AppliesToUser("anyone").ShouldBeTrue();
     }
 }

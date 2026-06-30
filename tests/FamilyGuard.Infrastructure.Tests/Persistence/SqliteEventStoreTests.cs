@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Domain.Entities;
 using FamilyGuard.Domain.Enums;
@@ -32,9 +32,9 @@ public class SqliteEventStoreTests : IDisposable
         _store.Append(evt);
         var results = _store.QueryRecent();
 
-        results.Should().ContainSingle();
-        results[0].EventType.Should().Be(EventType.AgentStarted);
-        results[0].WindowsUser.Should().Be("child1");
+        results.Count.ShouldBe(1);
+        results[0].EventType.ShouldBe(EventType.AgentStarted);
+        results[0].WindowsUser.ShouldBe("child1");
     }
 
     [Fact]
@@ -46,8 +46,8 @@ public class SqliteEventStoreTests : IDisposable
 
         var results = _store.QueryByEventType(EventType.MicAutoMuted);
 
-        results.Should().ContainSingle();
-        results[0].EventType.Should().Be(EventType.MicAutoMuted);
+        results.Count.ShouldBe(1);
+        results[0].EventType.ShouldBe(EventType.MicAutoMuted);
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public class SqliteEventStoreTests : IDisposable
             t1.AddMinutes(30),
             t2.AddMinutes(30));
 
-        results.Should().ContainSingle();
-        results[0].EventType.Should().Be(EventType.MicAutoMuted);
+        results.Count.ShouldBe(1);
+        results[0].EventType.ShouldBe(EventType.MicAutoMuted);
     }
 
     [Fact]
@@ -84,8 +84,7 @@ public class SqliteEventStoreTests : IDisposable
         _store.Append(evt);
         var results = _store.QueryRecent();
 
-        results[0].Details.Should().ContainKey("device_name")
-            .WhoseValue.Should().Be("HyperX QuadCast");
+        results[0].Details["device_name"].ShouldBe("HyperX QuadCast");
     }
 
     [Fact]
@@ -98,7 +97,7 @@ public class SqliteEventStoreTests : IDisposable
 
         var results = _store.QueryRecent(limit: 3);
 
-        results.Should().HaveCount(3);
+        results.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -112,6 +111,6 @@ public class SqliteEventStoreTests : IDisposable
 
         var results = _store.QueryRecent();
 
-        results[0].TimestampUtc.Should().Be(t2);
+        results[0].TimestampUtc.ShouldBe(t2);
     }
 }

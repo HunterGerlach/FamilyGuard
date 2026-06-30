@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using NSubstitute;
 using Xunit;
 using FamilyGuard.Application.Ports.Input;
@@ -33,7 +33,7 @@ public class EvaluatePresenceUseCaseTests
 
         _useCase.Execute();
 
-        _stateMachine.CurrentState.Should().Be(PresenceState.Present);
+        _stateMachine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class EvaluatePresenceUseCaseTests
         _detector.GetIdleTime().Returns(TimeSpan.FromSeconds(91));
         _useCase.Execute();
 
-        _stateMachine.CurrentState.Should().Be(PresenceState.Away);
+        _stateMachine.CurrentState.ShouldBe(PresenceState.Away);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class EvaluatePresenceUseCaseTests
 
         _useCase.Execute();
 
-        _stateMachine.CurrentState.Should().Be(PresenceState.Present);
+        _stateMachine.CurrentState.ShouldBe(PresenceState.Present);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class EvaluatePresenceUseCaseTests
 
         _useCase.Execute();
 
-        _events.Should().ContainSingle()
-            .Which.NewState.Should().Be(PresenceState.Present);
+        var item = _events.ShouldHaveSingleItem();
+        item.NewState.ShouldBe(PresenceState.Present);
     }
 }

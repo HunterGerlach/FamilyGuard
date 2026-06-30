@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 using FamilyGuard.Application.Ports.Input;
 
@@ -9,6 +9,6 @@ public class SmokeTest
     [Fact]
     public void IPresenceDetector_InterfaceExists()
     {
-        typeof(IPresenceDetector).IsInterface.Should().BeTrue();
+        typeof(IPresenceDetector).IsInterface.ShouldBeTrue();
     }
 }

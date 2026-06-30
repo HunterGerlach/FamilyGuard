@@ -16,7 +16,7 @@ public sealed class Win32PresenceDetector : IPresenceDetector
     private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
     [DllImport("kernel32.dll")]
-    private static extern uint GetTickCount();
+    private static extern ulong GetTickCount64();
 
     public TimeSpan GetIdleTime()
     {
@@ -25,7 +25,10 @@ public sealed class Win32PresenceDetector : IPresenceDetector
         if (!GetLastInputInfo(ref info))
             return TimeSpan.Zero;
 
-        var idleMillis = GetTickCount() - info.dwTime;
+        // GetLastInputInfo.dwTime is 32-bit (wraps at ~49.7 days).
+        // GetTickCount64 is 64-bit. Mask to 32 bits for safe subtraction.
+        var currentTick = (uint)(GetTickCount64() & 0xFFFFFFFF);
+        var idleMillis = currentTick - info.dwTime;
         return TimeSpan.FromMilliseconds(idleMillis);
     }
 

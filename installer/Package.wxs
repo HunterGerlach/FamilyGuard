@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <Package Name="DaD - Digital Activity Defender"
+           Manufacturer="FamilyGuard"
+           Version="0.1.0"
+           UpgradeCode="E7A1B2C3-D4E5-F6A7-B8C9-D0E1F2A3B4C5"
+           Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DaD is already installed."
+                  AllowSameVersionUpgrades="yes" />
+
+    <!-- Install directory -->
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="FamilyGuard">
+        <Component Id="ServiceFiles" Guid="11111111-1111-1111-1111-111111111111">
+          <File Source="$(var.ServicePublishDir)\FamilyGuard.Service.exe" KeyPath="yes" />
+          <File Source="$(var.ServicePublishDir)\FamilyGuard.Service.dll" />
+          <File Source="$(var.ServicePublishDir)\appsettings.json" />
+
+          <!-- Install as Windows Service -->
+          <ServiceInstall Id="FamilyGuardService"
+                          Name="FamilyGuard"
+                          DisplayName="FamilyGuard Service"
+                          Description="DaD - Digital Activity Defender. Family endpoint guidance service."
+                          Type="ownProcess"
+                          Start="auto"
+                          ErrorControl="normal"
+                          Account="LocalSystem" />
+
+          <ServiceControl Id="StartFamilyGuardService"
+                          Name="FamilyGuard"
+                          Start="install"
+                          Stop="both"
+                          Remove="uninstall"
+                          Wait="yes" />
+        </Component>
+
+        <Component Id="AgentFiles" Guid="22222222-2222-2222-2222-222222222222">
+          <File Source="$(var.AgentPublishDir)\FamilyGuard.Agent.exe" KeyPath="yes" />
+          <File Source="$(var.AgentPublishDir)\FamilyGuard.Agent.dll" />
+        </Component>
+
+        <Component Id="UIFiles" Guid="33333333-3333-3333-3333-333333333333">
+          <File Source="$(var.UIPublishDir)\FamilyGuard.UI.exe" KeyPath="yes" />
+          <File Source="$(var.UIPublishDir)\FamilyGuard.UI.dll" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Data directory with proper ACLs -->
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="DATAFOLDER" Name="FamilyGuard">
+        <Component Id="DataDirectory" Guid="44444444-4444-4444-4444-444444444444">
+          <CreateFolder>
+            <!-- Standard users can read but not write -->
+            <Permission User="Users" GenericRead="yes" GenericWrite="no" />
+            <!-- SYSTEM and Administrators have full control -->
+            <Permission User="SYSTEM" GenericAll="yes" />
+            <Permission User="Administrators" GenericAll="yes" />
+          </CreateFolder>
+          <RegistryValue Root="HKLM"
+                         Key="Software\FamilyGuard"
+                         Name="DataPath"
+                         Type="string"
+                         Value="[DATAFOLDER]"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Feature tree -->
+    <Feature Id="Complete" Title="DaD" Level="1">
+      <ComponentRef Id="ServiceFiles" />
+      <ComponentRef Id="AgentFiles" />
+      <ComponentRef Id="UIFiles" />
+      <ComponentRef Id="DataDirectory" />
+    </Feature>
+
+    <!-- Launch conditions -->
+    <Launch Condition="Privileged" Message="Administrator privileges are required to install DaD." />
+
+  </Package>
+</Wix>

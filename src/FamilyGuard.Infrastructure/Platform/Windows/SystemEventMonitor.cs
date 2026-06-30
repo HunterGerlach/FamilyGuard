@@ -73,6 +73,16 @@ public sealed class SystemEventMonitor : ISystemEventMonitor
         }
     }
 
+    /// <summary>
+    /// Call when the default audio endpoint changes. Will be wired to
+    /// IMMNotificationClient.OnDefaultDeviceChanged in a future iteration.
+    /// </summary>
+    public void RaiseDefaultMicrophoneChanged()
+    {
+        _logger.LogInformation("Default microphone changed");
+        DefaultMicrophoneChanged?.Invoke();
+    }
+
     public void Dispose()
     {
         if (!_started) return;

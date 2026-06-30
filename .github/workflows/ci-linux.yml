@@ -12,5 +12,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and test in UBI9 container
+      - name: Build, test, and cross-compile in UBI9 container
         run: podman build -f build/Containerfile -t familyguard-build .
+
+      - name: Extract Windows binaries
+        run: |
+          podman create --name extract familyguard-build
+          podman cp extract:/publish ./publish
+          podman rm extract
+
+      - name: Upload Service binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: familyguard-service-win-x64
+          path: publish/service/
+
+      - name: Upload Agent binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: familyguard-agent-win-x64
+          path: publish/agent/

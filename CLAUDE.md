@@ -46,4 +46,12 @@ Windows API calls exist ONLY in `Infrastructure/Platform/Windows/` and are:
 
 - Linux CI: Podman build in GitHub Actions — builds all, tests all, cross-publishes win-x64 binaries
 - Windows CI: Full solution build including WPF UI + integration tests
-- Release: On tag push — build, test, publish, WiX MSI, update manifest, GitHub Release
+- Release: On tag push — build, test, publish, sign (Authenticode), WiX MSI, update manifest, GitHub Release
+
+## Code Signing
+
+- Self-signed dev cert stored as GitHub Actions secrets (`CODE_SIGNING_CERT`, `CODE_SIGNING_PASSWORD`)
+- Release workflow decodes PFX, signs .exe files + MSI with signtool, timestamps via DigiCert
+- Cert is cleaned up after signing (never persisted on runner)
+- `.certs/` directory is gitignored — never commit certificates
+- For production: replace the GitHub secret with a CA-issued code signing cert (same workflow, just swap the PFX)

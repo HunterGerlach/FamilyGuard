@@ -9,6 +9,9 @@ public sealed class PolicyEngine : IPolicyEngine
         IReadOnlyList<PolicyRule> rules,
         PolicyEvaluationContext context)
     {
+        ArgumentNullException.ThrowIfNull(rules);
+        ArgumentNullException.ThrowIfNull(context);
+
         var results = new List<PolicyEvaluationResult>();
 
         foreach (var rule in rules)

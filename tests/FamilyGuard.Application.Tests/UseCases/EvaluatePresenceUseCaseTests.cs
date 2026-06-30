@@ -22,7 +22,7 @@ public class EvaluatePresenceUseCaseTests
     {
         _stateMachine = new PresenceStateMachine(90, _clock);
         _stateMachine.OnStateChanged += evt => _events.Add(evt);
-        _useCase = new EvaluatePresenceUseCase(_detector, _stateMachine, _clock);
+        _useCase = new EvaluatePresenceUseCase(_detector, _stateMachine);
     }
 
     [Fact]

@@ -44,7 +44,7 @@ public class AgentRunCycleTests
     public AgentRunCycleTests()
     {
         _stateMachine = new PresenceStateMachine(90, _clock);
-        _evalPresence = new EvaluatePresenceUseCase(_detector, _stateMachine, _clock);
+        _evalPresence = new EvaluatePresenceUseCase(_detector, _stateMachine);
         _evalPolicy = new EvaluatePolicyUseCase(_policyEngine, _mic);
         _muteMic = new MuteMicrophoneUseCase(_mic, _eventStore, _notifier);
     }

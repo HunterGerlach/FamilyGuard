@@ -7,16 +7,12 @@ public sealed class EvaluatePresenceUseCase
 {
     private readonly IPresenceDetector _detector;
     private readonly PresenceStateMachine _stateMachine;
-    private readonly TimeProvider _clock;
-
     public EvaluatePresenceUseCase(
         IPresenceDetector detector,
-        PresenceStateMachine stateMachine,
-        TimeProvider clock)
+        PresenceStateMachine stateMachine)
     {
         _detector = detector;
         _stateMachine = stateMachine;
-        _clock = clock;
     }
 
     public void Execute()

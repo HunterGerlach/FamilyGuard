@@ -82,4 +82,47 @@ public class PolicyRuleTests
 
         rule.AppliesToUser("anyone").ShouldBeTrue();
     }
+
+    [Fact]
+    public void Create_CopiesCollectionsToProtectInvariants()
+    {
+        var conditions = new List<PolicyCondition> { PolicyCondition.MicUnmuted };
+        var actions = new List<PolicyAction> { new(PolicyActionType.MuteMicrophone) };
+
+        var rule = new PolicyRule(
+            id: "mute_unattended_microphone",
+            name: "Mute unattended microphone",
+            enabled: true,
+            conditions: conditions,
+            actions: actions);
+
+        conditions.Add(PolicyCondition.PresenceAway);
+        actions.Add(new PolicyAction(PolicyActionType.LogEvent));
+
+        rule.Conditions.ShouldBe([PolicyCondition.MicUnmuted]);
+        rule.Actions.Count.ShouldBe(1);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Create_RejectsBlankIdentity(string value)
+    {
+        Should.Throw<ArgumentException>(() => new PolicyRule(value, "Name", true));
+        Should.Throw<ArgumentException>(() => new PolicyRule("id", value, true));
+    }
+
+    [Fact]
+    public void Rule_NormalizesUserFilters()
+    {
+        var rule = new PolicyRule(
+            id: "mute_unattended_microphone",
+            name: "Mute unattended microphone",
+            enabled: true,
+            appliesToUsers: [" child1 ", "CHILD1"]);
+
+        rule.AppliesToUsers.ShouldBe(["child1"]);
+        rule.AppliesToUser("Child1").ShouldBeTrue();
+    }
+
 }

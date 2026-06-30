@@ -1,3 +1,4 @@
+using FamilyGuard.Domain;
 using FamilyGuard.Domain.Enums;
 
 namespace FamilyGuard.Domain.Entities;
@@ -22,19 +23,31 @@ public sealed class PolicyRule
         IReadOnlyList<PolicyAction>? actions = null,
         IReadOnlyList<string>? appliesToUsers = null)
     {
-        Id = id;
-        Name = name;
+        Id = Guard.NotBlank(id, nameof(id));
+        Name = Guard.NotBlank(name, nameof(name));
         Enabled = enabled;
-        Conditions = conditions ?? [];
-        Actions = actions ?? [];
-        AppliesToUsers = appliesToUsers;
-        _appliesToUsersSet = appliesToUsers is { Count: > 0 }
-            ? new HashSet<string>(appliesToUsers, StringComparer.OrdinalIgnoreCase)
+        Conditions = Guard.Snapshot(conditions);
+        Actions = Guard.Snapshot(actions);
+        AppliesToUsers = NormalizeUsers(appliesToUsers);
+        _appliesToUsersSet = AppliesToUsers is { Count: > 0 }
+            ? new HashSet<string>(AppliesToUsers, StringComparer.OrdinalIgnoreCase)
             : null;
     }
 
     public bool AppliesToUser(string windowsUser)
     {
+        Guard.NotBlank(windowsUser, nameof(windowsUser));
         return _appliesToUsersSet is null || _appliesToUsersSet.Contains(windowsUser);
+    }
+
+    private static IReadOnlyList<string>? NormalizeUsers(IReadOnlyList<string>? users)
+    {
+        if (users is null or { Count: 0 })
+            return null;
+
+        return users
+            .Select(user => Guard.NotBlank(user, nameof(users)).Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 }

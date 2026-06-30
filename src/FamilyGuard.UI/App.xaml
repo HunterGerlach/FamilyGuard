@@ -5,6 +5,58 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
+            <Color x:Key="DadBlue">#2563EB</Color>
+            <Color x:Key="DadInk">#111827</Color>
+            <Color x:Key="DadMutedInk">#4B5563</Color>
+            <Color x:Key="DadSurface">#F8FAFC</Color>
+            <Color x:Key="DadBorder">#D1D5DB</Color>
+            <SolidColorBrush x:Key="DadBlueBrush" Color="{StaticResource DadBlue}" />
+            <SolidColorBrush x:Key="DadInkBrush" Color="{StaticResource DadInk}" />
+            <SolidColorBrush x:Key="DadMutedInkBrush" Color="{StaticResource DadMutedInk}" />
+            <SolidColorBrush x:Key="DadSurfaceBrush" Color="{StaticResource DadSurface}" />
+            <SolidColorBrush x:Key="DadBorderBrush" Color="{StaticResource DadBorder}" />
+
+            <Style TargetType="Window">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Foreground" Value="{StaticResource DadInkBrush}" />
+                <Setter Property="Background" Value="White" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="MinHeight" Value="34" />
+                <Setter Property="MinWidth" Value="88" />
+                <Setter Property="Padding" Value="14,6" />
+                <Setter Property="Margin" Value="0" />
+            </Style>
+
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Background" Value="{StaticResource DadBlueBrush}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="BorderBrush" Value="{StaticResource DadBlueBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="PageTitle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource DadInkBrush}" />
+            </Style>
+
+            <Style x:Key="HelpText" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DadMutedInkBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="LineHeight" Value="20" />
+            </Style>
+
+            <Style x:Key="Card" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource DadSurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource DadBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="16" />
+            </Style>
+
             <tb:TaskbarIcon x:Key="TrayIcon"
                             ToolTipText="DaD - Digital Activity Defender"
                             MenuActivation="LeftOrRightClick"

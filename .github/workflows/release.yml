@@ -18,21 +18,52 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          dotnet-quality: 'ga'
 
       - name: Restore
         run: dotnet restore FamilyGuard.sln
 
       - name: Test
-        run: dotnet test FamilyGuard.sln -c Release --no-restore
+        run: |
+          dotnet test tests/FamilyGuard.Domain.Tests/ -c Release
+          dotnet test tests/FamilyGuard.Application.Tests/ -c Release
+          dotnet test tests/FamilyGuard.Infrastructure.Tests/ -c Release
 
       - name: Publish Service
-        run: dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -o publish/service --self-contained false
+        run: dotnet publish src/FamilyGuard.Service/FamilyGuard.Service.csproj -c Release -r win-x64 -o publish/service --self-contained false
 
       - name: Publish Agent
-        run: dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -o publish/agent --self-contained false
+        run: dotnet publish src/FamilyGuard.Agent/FamilyGuard.Agent.csproj -c Release -r win-x64 -o publish/agent --self-contained false
 
       - name: Publish UI
-        run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -o publish/ui --self-contained false
+        run: dotnet publish src/FamilyGuard.UI/FamilyGuard.UI.csproj -c Release -r win-x64 -o publish/ui --self-contained false
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix
+
+      - name: Build MSI
+        run: |
+          wix build installer/Package.wxs `
+            -d ServicePublishDir=publish/service `
+            -d AgentPublishDir=publish/agent `
+            -d UIPublishDir=publish/ui `
+            -o publish/FamilyGuard.msi
+        continue-on-error: true
+
+      - name: Generate update manifest
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $msiPath = "publish/FamilyGuard.msi"
+          $hash = if (Test-Path $msiPath) { (Get-FileHash $msiPath -Algorithm SHA256).Hash } else { "N/A" }
+          $manifest = @{
+            version = $version
+            sha256 = $hash
+            download_url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/FamilyGuard.msi"
+            released_at = (Get-Date -Format "o")
+          } | ConvertTo-Json
+          $manifest | Out-File -FilePath publish/update-manifest.json -Encoding utf8
+          Write-Host $manifest
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -45,4 +76,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            publish/**/*
+            publish/FamilyGuard.msi
+            publish/update-manifest.json

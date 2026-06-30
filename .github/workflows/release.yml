@@ -84,12 +84,15 @@ jobs:
 
       # --- Installer ---
       - name: Install WiX Toolset
+        env:
+          WIX_ACCEPT_OSMF_EULA: "true"
         run: |
           dotnet tool install --global wix
-          wix eula accept
           wix extension add WixToolset.UI.wixext
 
       - name: Build MSI
+        env:
+          WIX_ACCEPT_OSMF_EULA: "true"
         run: |
           wix build installer/Package.wxs `
             -d ServicePublishDir=publish/service `

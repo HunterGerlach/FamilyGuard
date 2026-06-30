@@ -1,4 +1,5 @@
 #if WINDOWS
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Input;
 using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Infrastructure.Platform.Windows;
@@ -10,6 +11,7 @@ namespace FamilyGuard.Agent;
 /// Registers Windows-specific platform adapters.
 /// Separated to keep Program.cs clean and enable conditional compilation.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public static class AgentPlatformRegistration
 {
     public static void RegisterWindowsServices(IServiceCollection services)

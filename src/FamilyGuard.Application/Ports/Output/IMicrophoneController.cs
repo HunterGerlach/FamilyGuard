@@ -7,4 +7,5 @@ public interface IMicrophoneController
     MicrophoneInfo? GetDefaultCommunicationsMicrophone();
     bool IsMuted();
     void Mute();
+    void Unmute();
 }

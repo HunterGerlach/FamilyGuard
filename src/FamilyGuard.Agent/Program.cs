@@ -5,11 +5,36 @@ using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Application.StateMachine;
 using FamilyGuard.Application.UseCases;
 using FamilyGuard.Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+// Data path
+var dataPath = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+    "FamilyGuard");
+Directory.CreateDirectory(dataPath);
+var dbPath = Path.Combine(dataPath, "familyguard.db");
+var connectionString = $"Data Source={dbPath}";
+
+// Run migrations
+using (var migrationConn = new SqliteConnection(connectionString))
+{
+    migrationConn.Open();
+    new MigrationRunner(migrationConn).Run(Migrations.All);
+}
+
+// Infrastructure — persistence
+builder.Services.AddSingleton<IEventStore>(new SqliteEventStore(connectionString));
+builder.Services.AddSingleton<ISettingsRepository>(new SqliteSettingsRepository(connectionString));
+builder.Services.AddSingleton<IPolicyRepository>(sp =>
+{
+    var conn = new SqliteConnection(connectionString);
+    conn.Open();
+    return new SqlitePolicyRepository(conn);
+});
 
 // Core application services
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
@@ -19,23 +44,24 @@ builder.Services.AddSingleton(sp =>
     return new PresenceStateMachine(settings.PresenceTimeoutSeconds, sp.GetRequiredService<TimeProvider>());
 });
 builder.Services.AddSingleton<IPolicyEngine, PolicyEngine>();
+builder.Services.AddSingleton<PinRateLimiter>(sp =>
+    new PinRateLimiter(sp.GetRequiredService<TimeProvider>()));
 
 // Use cases
 builder.Services.AddSingleton<EvaluatePresenceUseCase>();
 builder.Services.AddSingleton<EvaluatePolicyUseCase>();
 builder.Services.AddSingleton<MuteMicrophoneUseCase>();
+builder.Services.AddSingleton<ManualMicControlUseCase>();
 
-// Infrastructure — persistence (cross-platform)
-var dataPath = Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-    "FamilyGuard");
-Directory.CreateDirectory(dataPath);
+// Ensure default policy rules exist
+builder.Services.AddSingleton(sp =>
+{
+    var repo = sp.GetRequiredService<IPolicyRepository>();
+    repo.EnsureDefaultRules();
+    return repo;
+});
 
-var dbPath = Path.Combine(dataPath, "familyguard.db");
-builder.Services.AddSingleton<IEventStore>(new SqliteEventStore($"Data Source={dbPath}"));
-builder.Services.AddSingleton<ISettingsRepository>(new SqliteSettingsRepository($"Data Source={dbPath}"));
-
-// Infrastructure — Windows platform adapters (registered only on Windows)
+// Platform — Windows adapters
 if (OperatingSystem.IsWindows())
 {
     AgentPlatformRegistration.RegisterWindowsServices(builder.Services);

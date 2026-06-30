@@ -2,7 +2,6 @@ using Shouldly;
 using NSubstitute;
 using Xunit;
 using FamilyGuard.Application.Ports.Input;
-using FamilyGuard.Application.Ports.Output;
 using FamilyGuard.Application.UseCases;
 using FamilyGuard.Domain.ValueObjects;
 
@@ -12,12 +11,11 @@ public class SuperviseSessionsUseCaseTests
 {
     private readonly ISessionMonitor _sessions = Substitute.For<ISessionMonitor>();
     private readonly IAgentLifecycleManager _agents = Substitute.For<IAgentLifecycleManager>();
-    private readonly IEventStore _events = Substitute.For<IEventStore>();
     private readonly SuperviseSessionsUseCase _useCase;
 
     public SuperviseSessionsUseCaseTests()
     {
-        _useCase = new SuperviseSessionsUseCase(_sessions, _agents, _events);
+        _useCase = new SuperviseSessionsUseCase(_sessions, _agents);
     }
 
     [Fact]
@@ -91,5 +89,17 @@ public class SuperviseSessionsUseCaseTests
 
         _agents.Received(1).StopAgent(new SessionId(1));
         _agents.Received(1).StopAgent(new SessionId(2));
+    }
+
+    [Fact]
+    public void Create_WithMissingSessionsPort_Throws()
+    {
+        Should.Throw<ArgumentNullException>(() => new SuperviseSessionsUseCase(null!, _agents));
+    }
+
+    [Fact]
+    public void Create_WithMissingAgentPort_Throws()
+    {
+        Should.Throw<ArgumentNullException>(() => new SuperviseSessionsUseCase(_sessions, null!));
     }
 }

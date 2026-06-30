@@ -1,4 +1,5 @@
 using FamilyGuard.Application.Ports.Output;
+using FamilyGuard.Application.UseCases;
 using FamilyGuard.Infrastructure.Persistence;
 using FamilyGuard.Service;
 using Microsoft.Data.Sqlite;
@@ -36,6 +37,9 @@ if (OperatingSystem.IsWindows())
     ServicePlatformRegistration.RegisterWindowsServices(builder.Services, agentExePath);
 }
 #endif
+
+// Use cases
+builder.Services.AddSingleton<SuperviseSessionsUseCase>();
 
 // Service worker
 builder.Services.AddHostedService<ServiceWorker>();

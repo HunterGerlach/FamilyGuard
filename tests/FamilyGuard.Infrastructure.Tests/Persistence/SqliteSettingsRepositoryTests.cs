@@ -66,6 +66,21 @@ public class SqliteSettingsRepositoryTests : IDisposable
     }
 
     [Fact]
+    public void SetPin_StoresSaltedAdaptiveHash_NotRawSha256()
+    {
+        _repo.SetPin("1234");
+        var firstHash = _repo.Load().PinHash;
+
+        _repo.SetPin("1234");
+        var secondHash = _repo.Load().PinHash;
+
+        firstHash.ShouldStartWith("pbkdf2-sha256$");
+        secondHash.ShouldStartWith("pbkdf2-sha256$");
+        secondHash.ShouldNotBe(firstHash);
+        firstHash.ShouldNotBe("A6xnQhb8zLwT8y8w2t6m0qE1lE8s5mRi2TRZNKqBjf0=");
+    }
+
+    [Fact]
     public void SetPin_ThenVerifyWrongPin_Fails()
     {
         _repo.SetPin("1234");

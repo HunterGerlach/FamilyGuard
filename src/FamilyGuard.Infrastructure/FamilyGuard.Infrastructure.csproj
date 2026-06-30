@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Layer 2: Infrastructure — depends on Application + Domain -->
+  <ItemGroup>
+    <ProjectReference Include="..\FamilyGuard.Application\FamilyGuard.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.*" />
+  </ItemGroup>
+
+  <!-- Exclude Windows-specific platform code on non-Windows builds -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <Compile Remove="Platform/Windows/**" />
+  </ItemGroup>
+</Project>

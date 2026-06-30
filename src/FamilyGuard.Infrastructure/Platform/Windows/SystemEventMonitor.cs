@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Input;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
@@ -8,6 +9,7 @@ namespace FamilyGuard.Infrastructure.Platform.Windows;
 /// Monitors Windows system events: session lock/unlock, sleep/wake.
 /// Uses Microsoft.Win32.SystemEvents for session and power events.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class SystemEventMonitor : ISystemEventMonitor
 {
     private readonly ILogger<SystemEventMonitor> _logger;

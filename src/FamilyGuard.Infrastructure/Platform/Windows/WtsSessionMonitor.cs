@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Input;
 using FamilyGuard.Domain.Enums;
 using FamilyGuard.Domain.ValueObjects;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FamilyGuard.Infrastructure.Platform.Windows;
 
+[SupportedOSPlatform("windows")]
 public sealed class WtsSessionMonitor : ISessionMonitor
 {
     private readonly ILogger<WtsSessionMonitor> _logger;

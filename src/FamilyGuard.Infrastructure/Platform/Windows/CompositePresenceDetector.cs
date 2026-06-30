@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using FamilyGuard.Application.Ports.Input;
 using Microsoft.Extensions.Logging;
 
@@ -7,6 +8,7 @@ namespace FamilyGuard.Infrastructure.Platform.Windows;
 /// Combines Win32 keyboard/mouse idle detection with XInput controller detection.
 /// Controller input is treated equally to keyboard/mouse per spec.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class CompositePresenceDetector : IPresenceDetector
 {
     private readonly Win32PresenceDetector _win32;

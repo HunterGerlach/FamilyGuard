@@ -84,7 +84,12 @@ jobs:
 
       # --- Installer ---
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix
+        run: |
+          dotnet tool install --global wix
+          wix extension add WixToolset.UI.wixext
+
+      - name: Accept WiX OSMF EULA
+        run: wix eula accept
 
       - name: Build MSI
         run: |

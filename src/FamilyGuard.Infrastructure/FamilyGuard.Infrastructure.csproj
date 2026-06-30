@@ -13,4 +13,9 @@
   <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
     <Compile Remove="Platform/Windows/**" />
   </ItemGroup>
+
+  <!-- Windows-specific dependencies (only on Windows) -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.*" />
+  </ItemGroup>
 </Project>

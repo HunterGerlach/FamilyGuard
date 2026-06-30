@@ -77,7 +77,7 @@
       <Directory Id="DATAFOLDER" Name="FamilyGuard">
         <Component Id="DataDirectory" Guid="44444444-4444-4444-4444-444444444444">
           <CreateFolder>
-            <Permission User="Users" GenericRead="yes" GenericWrite="no" />
+            <Permission User="Users" GenericRead="yes" GenericExecute="yes" />
             <Permission User="SYSTEM" GenericAll="yes" />
             <Permission User="Administrators" GenericAll="yes" />
           </CreateFolder>

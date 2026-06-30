@@ -131,4 +131,4 @@ installer/
 
 ## License
 
-Proprietary — see LICENSE file.
+MIT — see [LICENSE](LICENSE) file.

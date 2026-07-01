@@ -35,7 +35,8 @@ See [docs/security.md](docs/security.md) for the full privacy and threat model.
 1. Download `FamilyGuard.msi` from [Releases](https://github.com/HunterGerlach/FamilyGuard/releases).
 2. Run the installer as administrator.
 3. The FamilyGuard service starts automatically and launches a per-user agent for each logged-in session.
-4. On first run, DAD prompts the parent to set a PIN to protect settings.
+4. Open **DAD - Digital Activity Defender** from the Start Menu if the tray app is not already visible.
+5. On first run, DAD prompts the parent to set a PIN to protect settings.
 
 See [docs/installation.md](docs/installation.md) for manual installation, uninstall, and upgrade details.
 

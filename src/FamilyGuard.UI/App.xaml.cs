@@ -7,11 +7,21 @@ namespace FamilyGuard.UI;
 
 public partial class App : System.Windows.Application
 {
+    private const string SingleInstanceMutexName = @"Local\FamilyGuard.UI";
+    private Mutex? _singleInstanceMutex;
+    private bool _ownsSingleInstanceMutex;
     private TaskbarIcon? _trayIcon;
     private TrayViewModel? _trayViewModel;
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _singleInstanceMutex = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out _ownsSingleInstanceMutex);
+        if (!_ownsSingleInstanceMutex)
+        {
+            Shutdown();
+            return;
+        }
+
         base.OnStartup(e);
 
         _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
@@ -25,6 +35,9 @@ public partial class App : System.Windows.Application
     protected override void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
+        if (_ownsSingleInstanceMutex)
+            _singleInstanceMutex?.ReleaseMutex();
+        _singleInstanceMutex?.Dispose();
         base.OnExit(e);
     }
 

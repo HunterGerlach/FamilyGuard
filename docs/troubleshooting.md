@@ -37,9 +37,11 @@ The service automatically launches one agent per interactive user session. If th
 
 ## Tray Icon Not Showing
 
+- Open **DAD - Digital Activity Defender** from the Start Menu; the MSI installs this shortcut for launching the interactive tray app on demand
 - The tray icon appears only for interactive sessions with a desktop
 - RDP disconnected sessions don't show a tray icon
 - Try right-clicking the notification area and selecting "Show hidden icons"
+- Confirm `FamilyGuard.UI.exe` exists in `C:\Program Files\FamilyGuard\`; if only `FamilyGuard.Service.exe` and `FamilyGuard.Agent.exe` are present, reinstall from the latest MSI
 
 ## Microphone Not Being Muted
 

@@ -1,13 +1,16 @@
 using System.Windows.Input;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FamilyGuard.Domain.Enums;
+using FamilyGuard.UI.Resources;
 
 namespace FamilyGuard.UI.ViewModels;
 
 public partial class TrayViewModel : ObservableObject
 {
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IconSource))]
     private TrayIconState _iconState = TrayIconState.Disconnected;
 
     [ObservableProperty]
@@ -27,6 +30,8 @@ public partial class TrayViewModel : ObservableObject
 
     [ObservableProperty]
     private string _lastAction = "None";
+
+    public ImageSource IconSource => TrayIconGenerator.GetImageSource(IconState);
 
     public ICommand MuteNowCommand { get; }
     public ICommand UnmuteCommand { get; }

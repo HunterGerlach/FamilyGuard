@@ -18,9 +18,11 @@
    - `C:\Program Files\FamilyGuard\` — executables (Service, Agent, UI)
    - `C:\ProgramData\FamilyGuard\` — data directory (SQLite database, logs)
    - FamilyGuard Windows service (auto-start)
+   - DAD tray app auto-start registration for interactive sign-ins
+   - Start Menu shortcut: **DAD - Digital Activity Defender**
    - Registry key: `HKLM\Software\FamilyGuard`
 
-4. The service starts automatically and launches an agent for each interactive user session.
+4. The service starts automatically and launches an agent for each interactive user session. The tray UI also starts at sign-in and can be opened any time from the Start Menu shortcut.
 
 ## Manual Installation (Development)
 
